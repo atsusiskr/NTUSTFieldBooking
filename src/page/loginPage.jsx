@@ -11,6 +11,7 @@ import { functionIconMap } from "../constant/IconMap";
 import { useAuthPageTransition } from "../components/useAuthPageTransition";
 import { useSportStore } from "../store/sportStore";
 import { describeRequestError } from "../utils/requestError";
+import { isLineDemoMode } from "../config/lineMode";
 
 
 function LoginPage() {
@@ -102,6 +103,10 @@ function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLineLogin = () => {
+    navigate("/line-login");
   };
 
   return (
@@ -198,6 +203,19 @@ function LoginPage() {
               {loading ? "登入中..." : "登入"}
             </button>
           </form>
+          <div className="my-5 flex items-center gap-3 text-sm text-gray-400" aria-hidden="true">
+            <div className="h-px flex-1 bg-gray-200" />
+            或
+            <div className="h-px flex-1 bg-gray-200" />
+          </div>
+          <button
+            type="button"
+            onClick={handleLineLogin}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#06C755] py-2 font-semibold text-white transition hover:bg-[#05b94e] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#06C755] focus-visible:ring-offset-2"
+          >
+            {isLineDemoMode ? "體驗 LINE 登入／註冊（展示）" : "使用 LINE 登入／註冊"}
+          </button>
+          {isLineDemoMode && <p className="mt-2 text-center text-xs text-gray-500">展示模式不會建立真實帳號或登入系統。</p>}
           <p className="text-center text-sm text-gray-500 mt-4">
             還沒有帳號？{" "}
             <Link to="/register" onClick={(event) => switchPage(event, "/register")} className="text-blue-500 hover:underline">

@@ -9,6 +9,7 @@ import { errorPopup, successPopup } from "../../components/pop-up";
 import PickUpDetailPopUp from "../components/pickUp/pickUpDetailPopUp";
 import SkillLevelPrompt from "../components/pickUp/SkillLevelPrompt";
 import JoinGroupDialog from "../components/pickUp/JoinGroupDialog";
+import CreatePickUpDialog from "../components/pickUp/CreatePickUpDialog";
 import { isGroupExpired, isRegistrationClosed } from "../pickUpTiming";
 import { describePickUpJoinError } from "../pickUpJoinError";
 import { getUpcomingConfirmedOrders } from "../orderDisplay";
@@ -23,7 +24,6 @@ import { describeRequestError } from "../../utils/requestError";
 
 const isMissingSkillLevelError = (error) => error?.response?.status === 400
     && /^skill level not set for this sport\b/i.test(String(error?.response?.data?.error || ""));
-const HOST_CREATE_URL = "https://vdmin.chenmh.dev/login";
 const PAGE_SIZES = [10, 20, 50];
 
 
@@ -48,7 +48,7 @@ function PickUpPageContent({ sportTypeId }) {
     const [now, setNow] = useState(() => Date.now());
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedGroup, setSelectedGroup] = useState(null);
-    const [showHostRedirectPrompt, setShowHostRedirectPrompt] = useState(false);
+    const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [isDetailModalClosing, setIsDetailModalClosing] = useState(false);
     const [levels, setLevels] = useState([]);
     const [myLevelStatus, setMyLevelStatus] = useState("checking");
@@ -651,30 +651,27 @@ function PickUpPageContent({ sportTypeId }) {
                 {/* 開團入口 */}
                 <button
                     type="button"
-                    onClick={() => setShowHostRedirectPrompt(true)}
+                    onClick={() => setShowCreateDialog(true)}
                     className="fixed bottom-4 left-4 z-50 flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
                 >
                     {functionIconMap.add.icon}
                     <span className="font-bold tracking-wider">{zhTWDictionary.pickUpPage.button.hostApply}</span>
                 </button>
 
-                {showHostRedirectPrompt && (
-                    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/55 px-4 py-6">
-                        <div role="dialog" aria-modal="true" aria-labelledby="host-redirect-title" aria-describedby="host-redirect-description" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl sm:p-7">
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <h2 id="host-redirect-title" className="text-xl font-bold text-slate-900">前往新增臨打團</h2>
-                                    <p id="host-redirect-description" className="mt-2 text-sm leading-6 text-slate-600">目前將前往新增臨打團的頁面。</p>
-                                </div>
-                                <button type="button" onClick={() => setShowHostRedirectPrompt(false)} aria-label="關閉提示" className="rounded-lg px-2 py-1 text-xl text-slate-500 hover:bg-slate-100">×</button>
-                            </div>
-                            <div className="mt-6 flex justify-end gap-3">
-                                <button type="button" onClick={() => setShowHostRedirectPrompt(false)} className="rounded-lg border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50">取消</button>
-                                <a href={HOST_CREATE_URL} className="rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700">前往</a>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                {showCreateDialog && <CreatePickUpDialog
+                    sportId={sportTypeId}
+                    levels={levels}
+                    levelsLoading={levelsLoading}
+                    levelsError={levelsError}
+                    onRetryLevels={() => setLevelsRetry((value) => value + 1)}
+                    onClose={() => setShowCreateDialog(false)}
+                    onCreated={() => {
+                        setShowCreateDialog(false);
+                        setPage(1);
+                        setRefreshTrigger((value) => value + 1);
+                        successPopup("建立成功", "臨打團已建立；列表會依目前的篩選條件顯示。");
+                    }}
+                />}
             </div>
         </div>
     )

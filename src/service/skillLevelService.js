@@ -3,6 +3,8 @@ import api from "../baseApi.js";
 const pendingRequests = new Map();
 const pendingMyLevelRequests = new Map();
 const cacheKey = (sportId) => `skillLevels:${sportId}`;
+const cacheTimeKey = (sportId) => `skillLevelsUpdated:${sportId}`;
+const CACHE_FALLBACK_MS = 5 * 60 * 1000;
 
 function normalizeLevels(items) {
   const unique = new Map();
@@ -46,6 +48,7 @@ async function fetchLevels(sportId) {
   try {
     // 只保存 [{ level, label }]，不另外保存對照表或上下限。
     localStorage.setItem(cacheKey(sportId), JSON.stringify(levels));
+    localStorage.setItem(cacheTimeKey(sportId), String(Date.now()));
   } catch {
     // 儲存空間不可用時，仍可使用這次從 API 取得的資料。
   }
@@ -67,15 +70,21 @@ export const skillLevelService = {
     if (!sportId) throw new Error("請先選擇球類");
     if (pendingRequests.has(sportId)) return pendingRequests.get(sportId);
     try {
-      const saved = localStorage.getItem(cacheKey(sportId));
-      if (saved !== null) {
-        const levels = JSON.parse(saved);
-        if (Array.isArray(levels)) return normalizeLevels(levels);
+      // 每次開啟頁面先確認 API；舊版快取可能保留已變更的標籤。
+      return await skillLevelService.refreshSkillLevels(sportId);
+    } catch (error) {
+      try {
+        const updatedAt = Number(localStorage.getItem(cacheTimeKey(sportId)));
+        const saved = localStorage.getItem(cacheKey(sportId));
+        if (updatedAt > 0 && Date.now() - updatedAt < CACHE_FALLBACK_MS && saved !== null) {
+          const levels = JSON.parse(saved);
+          if (Array.isArray(levels)) return normalizeLevels(levels);
+        }
+      } catch {
+        // 快取缺少或損壞時保留原本的 API 錯誤。
       }
-    } catch {
-      // 缺少或損壞的快取交由 API 補齊。
+      throw error;
     }
-    return skillLevelService.refreshSkillLevels(sportId);
   },
 
   getMyLevel(sportId) {

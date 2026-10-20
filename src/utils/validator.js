@@ -32,3 +32,13 @@ export const validateRegister = ({ name, username, gender, birth_date, email, pa
   if (password.length < 8) return zhTWDictionary.registerPage.errorMessage.passwordTooShort;
   return null;
 };
+
+export const validateLineRegistration = ({ name, username, gender, birth_date, email }) => {
+  const errors = zhTWDictionary.registerPage.errorMessage;
+  if (!name || !username || !gender || !birth_date) return errors.requiredFields;
+  if (!/^[a-zA-Z0-9]+$/.test(username)) return errors.usernameInvalid;
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return errors.emailInvalid;
+  if (!["male", "female", "other"].includes(gender)) return errors.genderInvalid;
+  if (!isValidBirthDate(birth_date)) return errors.birthDateInvalid;
+  return null;
+};

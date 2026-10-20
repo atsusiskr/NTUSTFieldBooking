@@ -2,6 +2,10 @@ import api from "../baseApi.js";
 import { locationService } from "./locationService.js";
 
 export const pickUpService = {
+  createPickUpGroup: async (payload) => {
+    const res = await api.post("/pickup-groups", payload);
+    return res.data;
+  },
   // 取得臨打團細節
   getPickUpDetail: async (groupId) => {
     const res = await api.get(`/pickup-groups/${groupId}`);

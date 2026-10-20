@@ -69,3 +69,13 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
 # nayamiskr-NTUSTFleidBooking
+
+## LINE 登入展示模式
+
+目前 `.env` 設定 `REACT_APP_LINE_DEMO_MODE=true`。重新啟動 `npm start` 後，登入頁的 LINE 按鈕會開啟 `/line-login` 展示流程：模擬 LINE 授權、補填註冊資料、展示完成，以及再次登入。可以直接用 `http://localhost:3000/line-login` 在本機預覽；這個模式不需要設定 LINE Developers Endpoint URL。
+
+展示資料只保存在目前分頁的 `sessionStorage`，不會呼叫 LINE 或系統後端，也不會產生系統登入憑證。關閉分頁即清除資料；頁面上的「重新體驗首次註冊」也可清除。
+
+若要讓其他裝置暫時觀看，保持 `npm start` 運行，再於另一個終端執行 `npx ngrok http 3000`，分享 ngrok 提供的 HTTPS 網址。這個展示流程不會跳到 LINE，因此不需更改 LIFF Endpoint URL。
+
+正式串接時，將 `REACT_APP_LINE_DEMO_MODE=false` 並重新啟動或重建前端。正式流程需要 HTTPS 的 LIFF Endpoint，以及後端 `/auth/line/login`、`/auth/line/register` API。不要把展示模式當作正式帳號驗證。
