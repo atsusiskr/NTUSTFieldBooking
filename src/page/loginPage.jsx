@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Loading from "../components/loading";
 import { loginService } from "../service/authService";
 import { sportService } from "../service/sportService";
-import { skillLevelService } from "../service/skillLevelService";
 import { errorPopup } from "../components/pop-up";
 import { zhTWDictionary } from "../locale/zh-TW/translate";
 import { functionIconMap } from "../constant/IconMap";
@@ -83,12 +82,6 @@ function LoginPage() {
       // const baseUrl = forSchool ? "ntust" : "external";
       // const typePath = forSchool ? "" : filter;
       setSportId(filter);
-      try {
-        await skillLevelService.refreshSkillLevels(filter);
-      } catch (error) {
-        // 登入已成功；程度資料失敗時，進入臨打頁後可以重新載入。
-        console.error("取得程度表失敗:", error);
-      }
       navigate(`external/group`);
 
     } catch (error) {

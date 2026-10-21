@@ -1,5 +1,41 @@
 import api from "../baseApi.js";
 import { locationService } from "./locationService.js";
+import { useAuthStore } from "../store/authStore.js";
+
+let pendingOrdersRequest = null;
+
+const getRawMyPickUpOrders = () => {
+  const token = useAuthStore.getState().token;
+  if (pendingOrdersRequest?.token === token) return pendingOrdersRequest.promise;
+
+  const promise = api.get("/pickup-orders").then((res) => res.data);
+  pendingOrdersRequest = { token, promise };
+  const clearPending = () => {
+    if (pendingOrdersRequest?.promise === promise) pendingOrdersRequest = null;
+  };
+  promise.then(clearPending, clearPending);
+  return promise;
+};
+
+export const createPickUpLoadContext = () => {
+  const groupRequests = new Map();
+  const locationRequests = new Map();
+  const remember = (requests, id, load) => {
+    const key = String(id);
+    if (!requests.has(key)) {
+      requests.set(key, load().catch((error) => {
+        requests.delete(key);
+        throw error;
+      }));
+    }
+    return requests.get(key);
+  };
+
+  return {
+    getGroup: (id) => remember(groupRequests, id, () => pickUpService.getPickUpDetail(id)),
+    getLocation: (id) => remember(locationRequests, id, () => locationService.getLocationInfo(id)),
+  };
+};
 
 export const pickUpService = {
   createPickUpGroup: async (payload) => {
@@ -13,10 +49,10 @@ export const pickUpService = {
   },
 
   // 取得臨打團清單
-  getPickUpList: async (params = {}) => {
-    const [res, myOrders] = await Promise.all([
+  getPickUpList: async (params = {}, { myOrders, context = createPickUpLoadContext() } = {}) => {
+    const [res, orders] = await Promise.all([
       api.get("/pickup-groups", { params }),
-      pickUpService.getMyPickUpList().catch(() => []),
+      myOrders === undefined ? pickUpService.getMyPickUpList().catch(() => []) : Promise.resolve(myOrders).catch(() => []),
     ]);
 
     const { data } = res;
@@ -28,7 +64,7 @@ export const pickUpService = {
     const total = Number.isInteger(data.total) && data.total >= 0 ? data.total : null;
 
     // 建立一個映射，將我的訂單的 pickup_group_id 對應到其狀態
-    const enrolledStatusMap = myOrders.reduce((acc, order) => {
+    const enrolledStatusMap = orders.reduce((acc, order) => {
       acc[order.pickup_group_id] = order.status;
       return acc;
     }, {});
@@ -39,11 +75,11 @@ export const pickUpService = {
         const orderStatus = enrolledStatusMap[pickup.id];
 
         try {
-          const pickupInfo = await pickUpService.getPickUpDetail(pickup.id);
-          const locationInfo = await locationService.getLocationInfo(
-            pickup.location_id,
-          );
-          const facilities = locationInfo?.facility.split("_") || [];
+          const pickupInfo = await context.getGroup(pickup.id);
+          const locationId = pickupInfo.location_id || pickup.location_id;
+          const locationInfo = locationId ? await context.getLocation(locationId) : null;
+          const facilities = typeof locationInfo?.facility === "string"
+            ? locationInfo.facility.split("_").filter(Boolean) : [];
 
           return {
             ...pickupInfo,
@@ -81,20 +117,18 @@ export const pickUpService = {
   },
 
   // 取得我的臨打團預約清單
-  getMyPickUpList: async (withDetail = false) => {
-    const res = await api.get("/pickup-orders");
-    const order = res.data;
+  getMyPickUpList: async (withDetail = false, { orders, context, confirmedOnly = false } = {}) => {
+    const rawOrders = orders === undefined ? await getRawMyPickUpOrders() : await orders;
+    if (!withDetail) return rawOrders;
 
-    if (!withDetail) return order;
-
-    const orderWithDetial = await Promise.all(
-      order.map(async (order) => {
-        const pickUpdetail = await pickUpService.getPickUpDetail(
-          order.pickup_group_id,
-        );
-        const locationInfo = await locationService.getLocationInfo(
-          pickUpdetail.location_id,
-        );
+    const requestContext = context || createPickUpLoadContext();
+    const relevantOrders = confirmedOnly
+      ? rawOrders.filter((order) => order.status === "confirmed") : rawOrders;
+    const ordersWithDetail = await Promise.all(
+      relevantOrders.map(async (order) => {
+        const pickUpdetail = await requestContext.getGroup(order.pickup_group_id);
+        const locationInfo = pickUpdetail.location_id
+          ? await requestContext.getLocation(pickUpdetail.location_id) : null;
         return {
           ...order,
           location: locationInfo,
@@ -112,7 +146,7 @@ export const pickUpService = {
         };
       }),
     );
-    return orderWithDetial;
+    return ordersWithDetail;
   },
 
   cancelPickUpOrder: async (orderId) => {

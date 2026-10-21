@@ -17,7 +17,7 @@ import { getUpcomingConfirmedOrders } from "../orderDisplay";
 import { facilityMap, functionIconMap, InfoIconMap, sportIconMap } from "../../constant/IconMap";
 import { statusMap } from "../../constant/statusMap";
 import { zhTWDictionary } from "../../locale/zh-TW/translate";
-import { pickUpService } from "../../service/pickUpService";
+import { createPickUpLoadContext, pickUpService } from "../../service/pickUpService";
 import { skillLevelService } from "../../service/skillLevelService";
 import { useSportStore } from "../../store/sportStore";
 import { describeRequestError } from "../../utils/requestError";
@@ -38,6 +38,7 @@ function PickUpPageContent({ sportTypeId }) {
     const [groups, setGroups] = useState([]);
     const [myPickUpOrders, setMyPickUpOrders] = useState([]);
     const [myOrdersError, setMyOrdersError] = useState(false);
+    const [ordersLoad, setOrdersLoad] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState("distance");
     const [page, setPage] = useState(1);
@@ -155,7 +156,7 @@ function PickUpPageContent({ sportTypeId }) {
     }, [levelRange, appliedLevelRange]);
 
     useEffect(() => {
-        if (levelsLoading) return;
+        if (levelsLoading || ordersLoad?.refreshTrigger !== refreshTrigger) return;
         let cancelled = false;
         const fetchGroups = async () => {
             setLoading(true);
@@ -170,7 +171,7 @@ function PickUpPageContent({ sportTypeId }) {
                     sort_order: "asc",
                     min_skill_level: minSkillLevel,
                     max_skill_level: maxSkillLevel,
-                });
+                }, { myOrders: ordersLoad.myOrders, context: ordersLoad.context });
                 if (cancelled) return;
                 if (data.page !== page) {
                     setPage(data.page);
@@ -201,12 +202,15 @@ function PickUpPageContent({ sportTypeId }) {
         }
         fetchGroups();
         return () => { cancelled = true; };
-    }, [sportTypeId, refreshTrigger, activeFilter, page, pageSize, hasPosition, latitude, longitude, minSkillLevel, maxSkillLevel, levelsLoading]);
+    }, [sportTypeId, refreshTrigger, activeFilter, page, pageSize, hasPosition, latitude, longitude, minSkillLevel, maxSkillLevel, levelsLoading, ordersLoad]);
 
     useEffect(() => {
         let cancelled = false;
+        const context = createPickUpLoadContext();
+        const myOrders = pickUpService.getMyPickUpList();
+        setOrdersLoad({ refreshTrigger, myOrders, context });
         setMyOrdersError(false);
-        pickUpService.getMyPickUpList(true).then((orders) => {
+        pickUpService.getMyPickUpList(true, { orders: myOrders, context, confirmedOnly: true }).then((orders) => {
             if (!cancelled) setMyPickUpOrders(orders);
         }).catch((error) => {
             if (cancelled) return;
