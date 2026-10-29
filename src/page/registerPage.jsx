@@ -1,8 +1,8 @@
+import { useTranslation } from "../locale/i18n";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { InputElement } from "../components/inputElement";
 import { useAuthPageTransition } from "../components/useAuthPageTransition";
-import { zhTWDictionary } from "../locale/zh-TW/translate";
 import { registerService } from "../service/registerService";
 import { validateRegister } from "../utils/validator";
 import { errorPopup } from "../components/pop-up";
@@ -14,6 +14,7 @@ const inputClassName = "mt-1.5 w-full rounded-lg border border-gray-300 bg-white
 const formatBirthDate = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
 function RegisterPage() {
+  const t = useTranslation();
   const [loading, setLoading] = useState(false);
   const [birthDate, setBirthDate] = useState("");
   const navigate = useNavigate();
@@ -35,9 +36,9 @@ function RegisterPage() {
       confirmPassword: String(values.get("confirmPassword") || ""),
     };
 
-    const validationError = validateRegister(formData);
+    const validationError = validateRegister(formData, t);
     if (validationError) {
-      errorPopup(zhTWDictionary.registerPage.errorMessage.error, validationError);
+      errorPopup(t("registerPage.errorMessage.error"), validationError);
       return;
     }
 
@@ -55,7 +56,7 @@ function RegisterPage() {
     } catch (error) {
       const duplicateName = /username|使用者名稱/i.test(requestErrorDetail(error));
       const failure = describeRequestError(error, {
-        409: { title: "註冊錯誤", message: duplicateName ? "該使用者名稱已被使用" : zhTWDictionary.registerPage.errorMessage.emailExist },
+        409: { title: t("registerPage.errorMessage.error"), message: duplicateName ? t("該使用者名稱已被使用") : t("registerPage.errorMessage.emailExist") },
       });
       errorPopup(failure.title, failure.message);
     } finally {
@@ -63,8 +64,14 @@ function RegisterPage() {
     }
   };
 
-  const labels = zhTWDictionary.registerPage.input.label;
-  const placeholders = zhTWDictionary.registerPage.input.placeholder;
+  const labels = Object.fromEntries(
+    ["name", "username", "gender", "birthDate", "email", "password", "confirmPassword"]
+      .map((key) => [key, t(`registerPage.input.label.${key}`)])
+  );
+  const placeholders = Object.fromEntries(
+    ["name", "username", "email", "password", "confirmPassword"]
+      .map((key) => [key, t(`registerPage.input.placeholder.${key}`)])
+  );
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-100 to-blue-300 px-4 py-6 sm:px-8 sm:py-8">
@@ -72,14 +79,14 @@ function RegisterPage() {
 
         <main className={`auth-card ${isLeaving ? "auth-card-leaving" : ""} mx-auto mt-6 w-full max-w-lg rounded-2xl border border-blue-100 bg-white p-6 shadow-xl sm:mt-8 sm:p-8`}>
           <h1 className="text-center text-2xl font-bold text-gray-800 leading-tight">
-            {zhTWDictionary.registerPage.title}
+            {t("registerPage.title")}
           </h1>
 
           <form className="mt-6 space-y-6" onSubmit={handleRegister} noValidate>
             <section>
               <div className="mb-4 flex items-center gap-3">
                 <h2 id="register-profile-heading" className="shrink-0 text-sm font-bold text-blue-700">
-                  基本資料
+                  {t("基本資料")}
                   </h2>
                 <div className="h-px flex-1 bg-blue-100" aria-hidden="true" />
               </div>
@@ -90,16 +97,16 @@ function RegisterPage() {
                   <div>
                     <label htmlFor="register-gender" className="block text-sm font-semibold text-slate-700">{labels.gender} <span className="text-red-600">*</span></label>
                     <select id="register-gender" name="gender" defaultValue="" required className={inputClassName}>
-                      <option value="" disabled>請選擇</option>
-                      <option value="male">男性</option>
-                      <option value="female">女性</option>
+                      <option value="" disabled>{t("請選擇")}</option>
+                      <option value="male">{t("男性")}</option>
+                      <option value="female">{t("女性")}</option>
                     </select>
                   </div>
                   <div>
                     <label htmlFor="register-birth-date" className="block text-sm font-semibold text-slate-700">{labels.birthDate} <span className="text-red-600">*</span></label>
                     <Calendar
                       buttonId="register-birth-date"
-                      placeholder="選擇出生日期"
+                      placeholder={t("選擇出生日期")}
                       showYearDropdown
                       maxDate={today}
                       onDayPicked={({ date }) => setBirthDate(formatBirthDate(date))}
@@ -114,7 +121,7 @@ function RegisterPage() {
             <section>
               <div className="mb-4 flex items-center gap-3">
                 <h2 id="register-account-heading" className="shrink-0 text-sm font-bold text-blue-700">
-                  登入資訊
+                  {t("登入資訊")}
                   </h2>
                 <div className="h-px flex-1 bg-blue-100" aria-hidden="true" />
               </div>
@@ -126,12 +133,12 @@ function RegisterPage() {
             </section>
 
             <button type="submit" disabled={loading} className="min-h-11 w-full rounded-lg bg-blue-600 px-4 py-2.5 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-              {loading ? zhTWDictionary.registerPage.button.registering : "建立帳號"}
+              {loading ? t("registerPage.button.registering") : t("建立帳號")}
             </button>
           </form>
 
           <p className="mt-5 text-center text-sm text-slate-500">
-            已有帳號？ <Link to="/" onClick={(event) => switchPage(event, "/")} className="font-semibold text-blue-700 hover:underline">回到登入</Link>
+            {t("已有帳號？")} <Link to="/" onClick={(event) => switchPage(event, "/")} className="font-semibold text-blue-700 hover:underline">{t("回到登入")}</Link>
           </p>
         </main>
       </div>

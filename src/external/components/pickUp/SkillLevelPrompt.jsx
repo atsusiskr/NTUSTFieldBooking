@@ -1,13 +1,15 @@
+import { useTranslation } from "../../../locale/i18n";
 import { functionIconMap } from "../../../constant/IconMap";
 
 export default function SkillLevelPrompt({ levels, levelsError, value, onChange, onSave, onClose, onRetry, saving, saveError }) {
+  const t = useTranslation();
     return (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/55 px-4 py-6">
             <div role="dialog" aria-modal="true" aria-labelledby="skill-level-title" aria-describedby="skill-level-description" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl sm:p-7">
                 <div className="flex items-start justify-between gap-4">
                     <div>
-                        <h2 id="skill-level-title" className="text-xl font-bold text-slate-900">設定你的運動程度</h2>
-                        <p id="skill-level-description" className="mt-2 text-sm leading-6 text-slate-600">你還沒有設定這個球類的程度。請選擇符合自己的程度後儲存。</p>
+                        <h2 id="skill-level-title" className="text-xl font-bold text-slate-900">{t("設定你的運動程度")}</h2>
+                        <p id="skill-level-description" className="mt-2 text-sm leading-6 text-slate-600">{t("你還沒有設定這個球類的程度。請選擇符合自己的程度後儲存。")}</p>
                     </div>
                     <button
                         type="button"
@@ -20,7 +22,7 @@ export default function SkillLevelPrompt({ levels, levelsError, value, onChange,
 
                 <form onSubmit={onSave} className="mt-6 space-y-4">
                     <div>
-                        <label htmlFor="my-skill-level" className="block text-sm font-semibold text-slate-700">我的程度</label>
+                        <label htmlFor="my-skill-level" className="block text-sm font-semibold text-slate-700">{t("我的程度")}</label>
                         <select
                             id="my-skill-level"
                             value={value}
@@ -30,7 +32,7 @@ export default function SkillLevelPrompt({ levels, levelsError, value, onChange,
                             autoFocus
                             className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-3 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-100"
                         >
-                            <option value="" disabled>請選擇程度</option>
+                            <option value="" disabled>{t("請選擇程度")}</option>
                             {levels.map((item) => <option key={item.level} value={item.level}>{item.label}</option>)}
                         </select>
                     </div>
@@ -38,21 +40,21 @@ export default function SkillLevelPrompt({ levels, levelsError, value, onChange,
                     {levelsError && (
                         <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
                             <p>{levelsError}</p>
-                            <button type="button" onClick={onRetry} className="mt-2 font-semibold underline">重新載入程度選項</button>
+                            <button type="button" onClick={onRetry} className="mt-2 font-semibold underline">{t("重新載入程度選項")}</button>
                         </div>
                     )}
                     {!levelsError && levels.length === 0 && (
                         <div role="status" className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
-                            <p>這個球類目前沒有可選的程度。</p>
-                            <button type="button" onClick={onRetry} className="mt-2 font-semibold text-blue-700 underline">重新載入程度選項</button>
+                            <p>{t("這個球類目前沒有可選的程度。")}</p>
+                            <button type="button" onClick={onRetry} className="mt-2 font-semibold text-blue-700 underline">{t("重新載入程度選項")}</button>
                         </div>
                     )}
                     {saveError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{saveError}</p>}
 
                     <div className="flex justify-end gap-3 pt-2">
-                        <button type="button" onClick={onClose} disabled={saving} className="rounded-lg border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">稍後再設定</button>
+                        <button type="button" onClick={onClose} disabled={saving} className="rounded-lg border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">{t("稍後再設定")}</button>
                         <button type="submit" disabled={!value || saving || Boolean(levelsError) || levels.length === 0} className="rounded-lg bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-                            {saving ? "儲存中..." : "儲存程度"}
+                            {saving ? t("儲存中...") : t("儲存程度")}
                         </button>
                     </div>
                 </form>

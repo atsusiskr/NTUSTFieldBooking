@@ -1,10 +1,11 @@
+import { useTranslation, translate } from "../../locale/i18n";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useRef, useState } from "react";
 import api from "../../baseApi";
 import { successPopup } from "../../components/pop-up";
-import { earliestBookingDate, isDateBookable } from "../bookingWindow";
+import { earliestBookingDate, isDateBookable } from "../utils/bookingWindow";
 import { formatDateTime } from "../../utils/dateTimeFormat";
-import { createBookingSeriesPayload, readBookingSeriesConflicts } from "../bookingSeries";
+import { createBookingSeriesPayload, readBookingSeriesConflicts } from "../utils/bookingSeries";
 import { describeRequestError, requestErrorDetail } from "../../utils/requestError";
 
 const TERM_MONTHS = { quarter: 3, half: 6, year: 12 };
@@ -19,6 +20,7 @@ const clockMinutes = (value) => {
 };
 
 function PayPage() {
+  const t = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -47,7 +49,7 @@ function PayPage() {
           onClick={() => navigate(-1)}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg"
         >
-          返回預約頁
+          {t("返回預約頁")}
         </button>
       </div>
     );
@@ -134,7 +136,7 @@ function PayPage() {
   if (isSeries) {
     try {
       seriesPayload = createBookingSeriesPayload(prepared, TERM_MONTHS[rentalPeriod]);
-      if (completedBookings.length) seriesValidationError = "已有部分單次預約送出，請先完成剩餘預約。";
+      if (completedBookings.length) seriesValidationError = t("已有部分單次預約送出，請先完成剩餘預約。");
     } catch (error) {
       seriesValidationError = error.message;
     }
@@ -146,7 +148,7 @@ function PayPage() {
     setConflicts([]);
     if (!prepared.length || prepared.some(({ payload, tr, normalizedDate }) =>
       !payload.resource_id || !payload.start_time || !payload.end_time || !tr || !normalizedDate)) {
-      setSubmitError("訂單資料不完整，請返回重新選擇場地與時段。");
+      setSubmitError(t("訂單資料不完整，請返回重新選擇場地與時段。"));
       return;
     }
     if (isSeries && seriesValidationError) {
@@ -154,7 +156,7 @@ function PayPage() {
       return;
     }
     if (!isSeries && (!Number.isFinite(payableTotal) || bookingItems.some((item) => !Number.isFinite(Number(item.totalPrice))))) {
-      setSubmitError("訂單金額無法確認，請返回重新選擇。");
+      setSubmitError(t("訂單金額無法確認，請返回重新選擇。"));
       return;
     }
     const token = localStorage.getItem("token");
@@ -172,12 +174,12 @@ function PayPage() {
       for (const { item, tr, normalizedDate, payload } of prepared) {
         const [year, month, day] = normalizedDate.split("-").map(Number);
         if (!isSeries && !isDateBookable(new Date(year, month - 1, day))) {
-          setSubmitError(`需提前 7 天預約，最早可選 ${formatDateTime(earliestBookingDate()).numericDate}。請返回重新選擇日期。`);
+          setSubmitError(t("需提前 7 天預約，最早可選 {value0}。請返回重新選擇日期。", { value0: formatDateTime(earliestBookingDate()).numericDate }));
           return;
         }
         const venue = item.fieldId ? venues.get(String(item.fieldId)) : null;
         if (item.fieldId && !venue) {
-          setSubmitError(`無法確認「${item.fieldName}」的場地資料，請稍後再試。`);
+          setSubmitError(t("無法確認「{value0}」的場地資料，請稍後再試。", { value0: item.fieldName }));
           return;
         }
         if (venue) {
@@ -189,7 +191,7 @@ function PayPage() {
             opening_hours_start: venue.opening_hours_start, opening_hours_end: venue.opening_hours_end });
           if (venue.opening === false || opens === null || closes === null || startsAt === null || endsAt === null ||
             startsAt < opens || endsAt > closes || startsAt >= endsAt) {
-            setSubmitError(`「${item.fieldName}・${item.resourceName}」${item.timeRange} 不在可預約時間內（營業時間 ${formatDateTime(venue.opening_hours_start).time}–${formatDateTime(venue.opening_hours_end).time}）。請返回重新選擇。`);
+            setSubmitError(t("「{value0}・{value1}」{value2} 不在可預約時間內（營業時間 {value3}–{value4}）。請返回重新選擇。", { value0: item.fieldName, value1: item.resourceName, value2: item.timeRange, value3: formatDateTime(venue.opening_hours_start).time, value4: formatDateTime(venue.opening_hours_end).time }));
             return;
           }
         }
@@ -209,14 +211,14 @@ function PayPage() {
             const conflictingSlots = readBookingSeriesConflicts(error.response.data);
             setConflicts(conflictingSlots);
             setSubmitError(conflictingSlots.length
-              ? "以下日期與既有預約衝突，整筆長期預約未建立。請返回調整日期、場面或時段。"
-              : "所選長期時段與既有預約衝突，整筆長期預約未建立。請返回調整後再試。");
+              ? t("以下日期與既有預約衝突，整筆長期預約未建立。請返回調整日期、場面或時段。")
+              : t("所選長期時段與既有預約衝突，整筆長期預約未建立。請返回調整後再試。"));
           } else {
             setSubmitError(describeRequestError(error).message);
           }
           return;
         }
-        await successPopup("長期預約已送出", `已送出 ${TERM_MONTHS[rentalPeriod]} 個月的固定時段預約，請等候審核並依場地方通知於現場付款。`);
+        await successPopup(t("長期預約已送出"), t("已送出 {value0} 個月的固定時段預約，請等候審核並依場地方通知於現場付款。", { value0: TERM_MONTHS[rentalPeriod] }));
         navigate("/external/order");
         return;
       }
@@ -238,16 +240,16 @@ function PayPage() {
             status: e?.response?.status, response: e?.response?.data, message: e?.message });
           const detail = requestErrorDetail(e);
           const message = /booking must fall within the location's opening hours/i.test(detail)
-            ? "所選時段不在場地可預約時間內，請返回重新選擇。"
+            ? t("所選時段不在場地可預約時間內，請返回重新選擇。")
             : describeRequestError(e).message;
           setSubmitError(completed.size
-            ? `已有 ${completed.size} 筆預約成功送出，其餘尚未完成。${message} 再次送出時會略過已成功的項目。`
+            ? translate("已有 {value0} 筆預約成功送出，其餘尚未完成。{value1} 再次送出時會略過已成功的項目。", { value0: completed.size, value1: message })
             : message);
           return;
         }
       }
 
-      await successPopup("預約已送出", `已送出 ${prepared.length} 筆預約，請耐心等候審核，並依場地方通知於現場付款。`);
+      await successPopup(t("預約已送出"), t("已送出 {value0} 筆預約，請耐心等候審核，並依場地方通知於現場付款。", { value0: prepared.length }));
       navigate(`/external/order`);
     } catch (e) {
       console.error("[預約場地] 訂單確認失敗", { status: e?.response?.status, message: e?.message });
@@ -264,58 +266,63 @@ function PayPage() {
 
         {/* 標題 */}
         <div className="text-center">
-          <h1 className="text-xl font-bold text-gray-800">確認預約</h1>
+          <h1 className="text-xl font-bold text-gray-800">{t("確認預約")}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            請確認以下訂單資訊
+            {t("請確認以下訂單資訊")}
           </p>
         </div>
 
         <div>
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">預約項目（{bookingItems.length} 筆）</h2>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">{t("預約項目（")}{bookingItems.length} {t("筆）")}</h2>
           <ul className="max-h-80 space-y-3 overflow-y-auto">
             {bookingItems.map((item, index) => <li key={`${item.resourceId}-${item.date}-${item.timeRange}-${index}`} className="rounded-lg border border-gray-200 p-4 text-sm">
               <div className="flex flex-wrap justify-between gap-2">
-                <strong className="text-gray-800">{item.fieldName}・{item.resourceName || "場地"}</strong>
+                <strong className="text-gray-800">{item.fieldName}・{item.resourceName || t("場地")}</strong>
                 <span className="font-semibold text-blue-700">NT$ {Number(item.totalPrice).toLocaleString("zh-TW")}</span>
               </div>
-              <p className="mt-2 text-gray-600">{item.date}　{item.timeRange}　·　{item.hours} 小時</p>
+              <p className="mt-2 text-gray-600">{item.date}　{item.timeRange}　·　{item.hours} {t("小時")}</p>
             </li>)}
           </ul>
         </div>
 
         <fieldset className="space-y-3 rounded-lg border border-gray-200 p-4">
-          <legend className="px-1 font-semibold text-gray-800">預約方式與租期</legend>
+          <legend className="px-1 font-semibold text-gray-800">{t("預約方式與租期")}</legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {rentalOptions.map((option) => <label key={option.value} className={`cursor-pointer rounded-lg border p-3 text-sm ${rentalPeriod === option.value ? "border-blue-600 bg-blue-50 text-blue-800" : "border-gray-200 text-gray-700"}`}>
               <input type="radio" name="rentalPeriod" value={option.value} checked={rentalPeriod === option.value} disabled={isSubmitting || completedBookings.length > 0} onChange={() => { setRentalPeriod(option.value); setSubmitError(null); setConflicts([]); }} className="mr-2 accent-blue-600" />
-              <span className="font-semibold">{option.label}</span>
-              <span className="mt-1 block text-xs">{option.duration}</span>
+              <span className="font-semibold">{t(option.label)}</span>
+              <span className="mt-1 block text-xs">{t(option.duration)}</span>
             </label>)}
           </div>
           {isSeries ? <div className="space-y-2 text-sm text-slate-700">
             {seriesValidationError ? <p role="alert" className="text-red-700">{seriesValidationError}</p> : <p role="status">
-              自 {formatDateTime(seriesPayload.start_date).numericDate} 起，每{seriesPayload.weekdays.map((day) => WEEKDAYS[day]).join("、每")} {seriesPayload.start_time}–{seriesPayload.end_time}，連續 {seriesPayload.term_months} 個月。
+              {t("自 {date} 起，每{days} {time}，連續 {months} 個月。", {
+                date: formatDateTime(seriesPayload.start_date).numericDate,
+                days: seriesPayload.weekdays.map((day) => t(WEEKDAYS[day])).join(t("、每")),
+                time: `${seriesPayload.start_time}–${seriesPayload.end_time}`,
+                months: seriesPayload.term_months,
+              })}
             </p>}
-            <p className="text-xs leading-5 text-slate-500">每筆長期預約固定同一面場地與同一時段；如有任一日期衝突，整筆都不會建立。</p>
+            <p className="text-xs leading-5 text-slate-500">{t("每筆長期預約固定同一面場地與同一時段；如有任一日期衝突，整筆都不會建立。")}</p>
           </div> : null}
         </fieldset>
 
         {/* 總金額 */}
         <div className="flex justify-between items-center bg-blue-50 rounded-lg px-4 py-3">
-          <span className="text-gray-600 font-medium">{isSeries ? "所選時段參考金額" : "現場應付金額"}</span>
+          <span className="text-gray-600 font-medium">{isSeries ? t("所選時段參考金額") : t("現場應付金額")}</span>
           <span className="text-xl font-bold text-blue-600">
-            {Number.isFinite(payableTotal) ? `NT$ ${payableTotal.toLocaleString("zh-TW")}` : "待確認"}
+            {Number.isFinite(payableTotal) ? `NT$ ${payableTotal.toLocaleString("zh-TW")}` : t("待確認")}
           </span>
         </div>
 
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
-          <h2 className="font-semibold">付款方式：現場付款</h2>
+          <h2 className="font-semibold">{t("付款方式：現場付款")}</h2>
           <p className="mt-2 leading-6">{isSeries
-            ? "送出後會一次建立整段租期的預約並等待審核，此頁不會線上扣款。上方僅為本次所選時段的參考金額，長期租期的實際總額請依場地方通知於現場支付。"
-            : "送出後會建立預約並等待審核，此頁不會線上扣款。請依場地方通知，在現場支付上方金額。"}</p>
+            ? t("送出後會一次建立整段租期的預約並等待審核，此頁不會線上扣款。上方僅為本次所選時段的參考金額，長期租期的實際總額請依場地方通知於現場支付。")
+            : t("送出後會建立預約並等待審核，此頁不會線上扣款。請依場地方通知，在現場支付上方金額。")}</p>
         </div>
 
-        {completedBookings.length > 0 && <p role="status" className="rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-800">已成功送出 {completedBookings.length} / {bookingItems.length} 筆預約。</p>}
+        {completedBookings.length > 0 && <p role="status" className="rounded-lg bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{t("已成功送出")} {completedBookings.length} / {bookingItems.length} {t("筆預約。")}</p>}
         {submitError && (
           <div role="alert" className="border border-red-200 bg-red-50 text-red-700 rounded-lg px-4 py-2 text-sm">
             {submitError}
@@ -335,14 +342,14 @@ function PayPage() {
             disabled={isSubmitting || Boolean(seriesValidationError)}
             className={`w-full bg-blue-600 text-white font-semibold py-3 rounded-lg transition ${isSubmitting || seriesValidationError ? "opacity-60 cursor-not-allowed" : "hover:bg-blue-700"}`}
           >
-            {isSubmitting ? "送出中..." : completedBookings.length ? "重試剩餘預約" : isSeries ? `送出${rentalOptions.find((option) => option.value === rentalPeriod)?.label}` : "送出預約"}
+            {isSubmitting ? t("送出中...") : completedBookings.length ? t("重試剩餘預約") : isSeries ? t("送出{period}", { period: t(rentalOptions.find((option) => option.value === rentalPeriod)?.label) }) : t("送出預約")}
           </button>
 
           <button
             onClick={() => navigate(-1)}
             className="w-full border border-gray-300 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-100 transition"
           >
-            返回修改預約
+            {t("返回修改預約")}
           </button>
         </div>
 

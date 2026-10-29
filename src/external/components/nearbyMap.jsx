@@ -1,4 +1,6 @@
-import { GoogleMap, LoadScript, OverlayView, useJsApiLoader } from "@react-google-maps/api";
+import { useTranslation } from "../../locale/i18n";
+import { buildPlacesWithColor, EMPTY_FIELDS } from "../../utils/mapPins";
+import { GoogleMap, OverlayView, useJsApiLoader } from "@react-google-maps/api";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { RiMapPinUserFill } from "react-icons/ri";
 import { IoPinSharp } from "react-icons/io5";
@@ -6,27 +8,14 @@ import { RiMapPin2Fill } from "react-icons/ri";
 import { FaSearch } from "react-icons/fa";
 
 
-function NearbyMap({ filter, fields = [], onConfirmPlace = () => { } }) {
+function NearbyMap({ filter, fields = EMPTY_FIELDS, onConfirmPlace = () => { } }) {
+  const t = useTranslation();
 
   const [currentPosition, setCurrentPosition] = useState(null);
   const mapRef = useRef(null);
   const scrollRef = useRef(null);
   const [focusedPlaceIdx, setFocusedPlaceIdx] = useState(null);
-  const [mapsLoadError, setMapsLoadError] = useState(null);
   const [selectedPlaceIdx, setSelectedPlaceIdx] = useState(null);
-
-  const calcDistanceKm = (lat1, lng1, lat2, lng2) => {
-    const R = 6371;
-    const toRad = (v) => (v * Math.PI) / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLng = toRad(lng2 - lng1);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-      Math.sin(dLng / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
 
   useEffect(() => {
     const saved = localStorage.getItem("currentPosition");
@@ -62,51 +51,9 @@ function NearbyMap({ filter, fields = [], onConfirmPlace = () => { } }) {
     );
   }, []);
 
-  const placesFromFields = currentPosition
-    ? fields
-      .map((f, idx) => {
-        const lat = Number(f.latitude);
-        const lng = Number(f.longitude);
-        return {
-          ...f,
-          id: f.id,
-          lat,
-          lng,
-          index: idx,
-        };
-      })
-      .filter((f) => Number.isFinite(f.lat) && Number.isFinite(f.lng))
-      .map((f, idx) => {
-        const distanceKm = calcDistanceKm(
-          currentPosition.lat,
-          currentPosition.lng,
-          f.lat,
-          f.lng
-        );
-
-        return {
-          ...f,
-          index: idx,
-          distanceKm,
-          distanceText: `距離約 ${distanceKm.toFixed(2)} 公里`,
-        };
-      })
-    : [];
-
-  const pinColor = [
-    "#E74C3C",
-    "#E67E22",
-    "#F1C40F",
-    "#2ECC71",
-    "#3498DB",
-    "#0501e2ff",
-    "#9B59B6",
-  ];
-
-  const getDistinctColor = (index) => pinColor[index % pinColor.length];
   const placesWithColor = useMemo(
-    () => placesFromFields.map((p, i) => ({ ...p, color: getDistinctColor(i) })),
-    [placesFromFields]
+    () => buildPlacesWithColor(fields, currentPosition, t),
+    [fields, currentPosition, t]
   );
 
   const handleRecenter = () => {
@@ -186,9 +133,9 @@ function NearbyMap({ filter, fields = [], onConfirmPlace = () => { } }) {
       currentPosition,
       ...placesWithColor.map((p) => ({ lat: p.lat, lng: p.lng })),
     ]);
-  }, [currentPosition, placesWithColor.length]);
+  }, [currentPosition, placesWithColor]);
 
-  const { isLoaded } = useJsApiLoader({
+  const { isLoaded, loadError } = useJsApiLoader({
         id: 'google-map-id',
         googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY
     });
@@ -206,7 +153,7 @@ function NearbyMap({ filter, fields = [], onConfirmPlace = () => { } }) {
             >
               {idx === -1 && (
                 <div className="absolute bottom-2 left-2 bg-red-100 text-red-600 text-xs font-medium px-2 py-0.5 rounded-full">
-                  上次預約
+                  {t("上次預約")}
                 </div>
               )}
               <span className="name" style={{ color: place.color }}>{place.name}</span>
@@ -214,17 +161,17 @@ function NearbyMap({ filter, fields = [], onConfirmPlace = () => { } }) {
               <button
                 onClick={() => handleClickLocation(idx)}
                 className="absolute bottom-2 right-20 bg-blue-400 text-white hover:bg-blue-600 text-base font-semibold px-2 py-1 rounded-md shadow"
-                title="查看位置"
+                title={t("查看位置")}
               >
                 <FaSearch />
               </button>
               <button
                 onClick={() => handleClick(idx)}
                 className={`absolute bottom-2 right-2 text-xs font-semibold px-2 py-1 rounded-md shadow ${selectedPlaceIdx === idx ? "bg-gray-400 cursor-default text-white" : "bg-green-400 text-white hover:bg-green-600"}`}
-                title="確認選擇"
+                title={t("確認選擇")}
                 disabled={selectedPlaceIdx === idx}
               >
-                {selectedPlaceIdx === idx ? "已選擇" : "確認場地"}
+                {selectedPlaceIdx === idx ? t("已選擇") : t("確認場地")}
               </button>
             </li>
           ))}
@@ -297,17 +244,17 @@ function NearbyMap({ filter, fields = [], onConfirmPlace = () => { } }) {
                 <button
                   className="absolute bottom-4 right-4 bg-white rounded-full p-2 shadow-md hover:bg-gray-100"
                   onClick={handleRecenter}
-                  title="回到目前位置"
+                  title={t("回到目前位置")}
                 >
                   <IoPinSharp size={24} color="#333" />
                 </button>
-              </GoogleMap>) : mapsLoadError ? (
+              </GoogleMap>) : loadError ? (
                 <div className="w-full h-full flex items-center justify-center bg-gray-100 text-red-600 p-4 text-center">
-                  {mapsLoadError}
+                  {t("無法載入地圖，請稍後再試。")}
                 </div>
               ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-600">
-                正在取得目前位置...
+                {t("正在取得目前位置...")}
               </div>
             )}
         </div>

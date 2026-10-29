@@ -1,3 +1,4 @@
+import { translate } from "../locale/i18n";
 import api from "../baseApi.js";
 import { locationService } from "./locationService.js";
 import { useAuthStore } from "../store/authStore.js";
@@ -56,7 +57,7 @@ export const pickUpService = {
     ]);
 
     const { data } = res;
-    if (!Array.isArray(data.items)) throw new Error("臨打團清單回應格式不正確");
+    if (!Array.isArray(data.items)) throw new Error(translate("臨打團清單回應格式不正確"));
     const pickups = data.items;
     const page = Number.isInteger(data.page) && data.page > 0 ? data.page : params.page || 1;
     const pageSize = Number.isInteger(data.page_size) && data.page_size > 0

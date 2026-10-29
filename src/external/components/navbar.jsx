@@ -1,22 +1,25 @@
+import { useTranslation } from "../../locale/i18n";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { IoPersonCircle } from "react-icons/io5";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { useAuthStore } from "../../store/authStore";
+import { logoutService } from "../../service/authService";
+import { errorPopup } from "../../components/pop-up";
+import { describeRequestError } from "../../utils/requestError";
 import { getUserProfile } from "../../service/userService";
 import { notificationService } from "../../service/notificationService";
 import { sportService } from "../../service/sportService";
 import { useSportStore } from "../../store/sportStore";
-import { findVenueSport } from "../venueSportFilter";
+import { findVenueSport } from "../utils/venueSportFilter";
 import './navbar.css';
 
 function Navbar() {
+  const t = useTranslation();
   const { fieldType, id: locationId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const sportId = useSportStore((state) => state.sportId);
   const setSportId = useSportStore((state) => state.setSportId);
-  const setLogout = useAuthStore((state) => state.setLogout);
   const [sports, setSports] = useState([]);
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -58,9 +61,9 @@ function Navbar() {
 
   const sportSelector = (id) => (
     <label className="navbar-sport-switch" htmlFor={id}>
-      <span>球類</span>
+      <span>{t("球類")}</span>
       <select id={id} value={selectedSport?.id || ""} onChange={handleSportChange} disabled={sports.length === 0}>
-        {!selectedSport && <option value="">載入中</option>}
+        {!selectedSport && <option value="">{t("載入中")}</option>}
         {sports.map((sport) => <option key={sport.id} value={sport.id}>{sport.name}</option>)}
       </select>
     </label>
@@ -122,32 +125,36 @@ function Navbar() {
   }, []);
 
   // 安全登出流程
-  const handleLogout = (e) => {
+  const handleLogout = async (e) => {
     e.preventDefault(); 
     setIsMenuOpen(false);
-    setLogout(); 
-    window.location.href = "/";
-
+    try {
+      await logoutService();
+      window.location.assign("/");
+    } catch (error) {
+      const failure = describeRequestError(error);
+      errorPopup(failure.title, failure.message);
+    }
   };
 
   const hasUnread = unread.count > 0;
   const notificationLabel = hasUnread
-    ? unread.exact ? `通知，${unread.count} 則未讀` : "通知，有未讀通知"
-    : "通知";
+    ? unread.exact ? t("通知，{count} 則未讀", { count: unread.count }) : t("通知，有未讀通知")
+    : t("通知");
   const badge = hasUnread && <span className="notification-badge" aria-hidden="true">{unread.exact ? unread.count > 99 ? "99+" : unread.count : ""}</span>;
 
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <h2>打球租與揪系統</h2>
+        <h2>{t("打球租與揪系統")}</h2>
       </div>
       
       {/* central menu */}
       <ul className="navbar-center">
-        <li><Link to="/external/group">臨打</Link></li>
-        <li><Link to={`/external/home/${currentType}`}>場地</Link></li>
-        <li><Link className="nav-notification-link" aria-label={notificationLabel} to="/external/announce">通知{badge}</Link></li>
-        <li><Link to="/external/order">我的預約</Link></li>
+        <li><Link to="/external/group">{t("臨打")}</Link></li>
+        <li><Link to={`/external/home/${currentType}`}>{t("場地")}</Link></li>
+        <li><Link className="nav-notification-link" aria-label={notificationLabel} to="/external/announce">{t("通知")}{badge}</Link></li>
+        <li><Link to="/external/order">{t("我的預約")}</Link></li>
       </ul>
       
       <div className="navbar-actions">
@@ -156,7 +163,7 @@ function Navbar() {
         <button
           type="button"
           className="icon-container"
-          aria-label={hasUnread ? "選單，有未讀通知" : "選單"}
+          aria-label={hasUnread ? t("選單，有未讀通知") : t("選單")}
           aria-expanded={isMenuOpen}
           aria-controls="user-menu"
           onClick={() => setIsMenuOpen((isOpen) => !isOpen)}
@@ -167,7 +174,7 @@ function Navbar() {
             {(user?.avatar_thumbnail || user?.avatar) && (
               <img
                 src={user.avatar_thumbnail || user.avatar}
-                alt="使用者頭像"
+                alt={t("使用者頭像")}
                 onError={(event) => { event.currentTarget.style.display = "none"; }}
               />
             )}
@@ -183,20 +190,20 @@ function Navbar() {
               {user?.avatar && <img src={user.avatar_thumbnail || user.avatar} alt="" onError={(event) => { event.currentTarget.style.display = "none"; }} />}
             </span>
             <div>
-              <p>{user?.display_name || "使用者"}</p>
+              <p>{user?.display_name || t("使用者")}</p>
               {user?.username && <span className="dropdown-username">@{user.username}</span>}
             </div>
           </div>
           <div className="dropdown-links">
             <div className="navbar-sport-mobile">{sportSelector("navbar-sport-mobile")}</div>
-            <Link onClick={() => setIsMenuOpen(false)} to="/external/group">臨打</Link>
-            <Link onClick={() => setIsMenuOpen(false)} to={`/external/home/${currentType}`}>場地</Link>
-            <Link className="nav-notification-link" aria-label={notificationLabel} onClick={() => setIsMenuOpen(false)} to="/external/announce">通知{badge}</Link>
-            <Link onClick={() => setIsMenuOpen(false)} to="/external/order">我的預約</Link>
-            <Link onClick={() => setIsMenuOpen(false)} to="/external/order/history">歷史預約</Link>
-            <Link onClick={() => setIsMenuOpen(false)} to="/external/user">個人資料</Link>
+            <Link onClick={() => setIsMenuOpen(false)} to="/external/group">{t("臨打")}</Link>
+            <Link onClick={() => setIsMenuOpen(false)} to={`/external/home/${currentType}`}>{t("場地")}</Link>
+            <Link className="nav-notification-link" aria-label={notificationLabel} onClick={() => setIsMenuOpen(false)} to="/external/announce">{t("通知")}{badge}</Link>
+            <Link onClick={() => setIsMenuOpen(false)} to="/external/order">{t("我的預約")}</Link>
+            <Link onClick={() => setIsMenuOpen(false)} to="/external/order/history">{t("歷史預約")}</Link>
+            <Link onClick={() => setIsMenuOpen(false)} to="/external/user">{t("個人資料")}</Link>
           </div>
-          <a className="logout-link" href="/" onClick={handleLogout}>登出</a>
+          <a className="logout-link" href="/" onClick={handleLogout}>{t("登出")}</a>
         </div>
       </div>
       </div>

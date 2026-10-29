@@ -1,4 +1,7 @@
+import { uiMessages } from "./ui";
+
 export const zhTWDictionary = {
+  ui: uiMessages,
   loginPage: {
     title: "揪打球和租場地系統",
     loadingMessage: "登入中...",

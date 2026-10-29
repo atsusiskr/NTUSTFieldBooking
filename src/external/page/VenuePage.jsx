@@ -1,3 +1,4 @@
+import { useTranslation, translate } from "../../locale/i18n";
 import { useEffect, useState } from "react";
 import Loading from "../../components/loading";
 import Navbar from "../components/navbar";
@@ -6,9 +7,9 @@ import Calendar from "../../components/dayPicker/dayPick";
 import NearbyMap from "../components/nearbyMap";
 import VenueBookingCards from "../components/VenueBookingCards";
 import api from "../../baseApi";
-import { earliestBookingDate } from "../bookingWindow";
+import { earliestBookingDate } from "../utils/bookingWindow";
 import { sportService } from "../../service/sportService";
-import { findVenueSport, resourcesForSport, resourceTypeForSport } from "../venueSportFilter";
+import { findVenueSport, resourcesForSport, resourceTypeForSport } from "../utils/venueSportFilter";
 import { formatDateTime } from "../../utils/dateTimeFormat";
 import { useSportStore } from "../../store/sportStore";
 import { describeRequestError } from "../../utils/requestError";
@@ -21,6 +22,7 @@ export default function VenuePage() {
 }
 
 function VenuePageContent({ selection }) {
+  const t = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [filteredFields, setFilteredFields] = useState([]);
@@ -42,7 +44,7 @@ function VenuePageContent({ selection }) {
         const sportItems = Array.isArray(sportResponse?.items) ? sportResponse.items : [];
         const sport = findVenueSport(sportItems, selection);
         const resourceType = resourceTypeForSport(sport);
-        if (!sport || !resourceType) throw new Error("無法辨識選取的球類");
+        if (!sport || !resourceType) throw new Error(translate("無法辨識選取的球類"));
         setSelectedSport(sport);
         const res = await api.get("/locations");
         const token = localStorage.getItem("token");
@@ -89,20 +91,20 @@ function VenuePageContent({ selection }) {
   return (
     <div className="app-page text-slate-900">
       <Navbar />
-      <Loading isLoading={loading} text="載入場地資料中..." />
+      <Loading isLoading={loading} text={t("載入場地資料中...")} />
       <main className="mx-auto max-w-7xl px-4 sm:px-6">
-        <h1 className="text-3xl font-bold text-center my-8">場地預約</h1>
+        <h1 className="text-3xl font-bold text-center my-8">{t("場地預約")}</h1>
         <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3"><NearbyMap key={selectedSport?.id} fields={filteredFields} onConfirmPlace={({ place }) => {
           if (place?.id == null) return;
           setSelectedVenueId(place.id);
           requestAnimationFrame(() => document.getElementById("venue-booking-section")?.scrollIntoView({ behavior: "smooth", block: "start" }));
         }} /></div>
-        <section aria-label="選擇預約日期" className="mb-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <section aria-label={t("選擇預約日期")} className="mb-7 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-bold">選擇日期</h2>
+            <h2 className="text-lg font-bold">{t("選擇日期")}</h2>
             <Calendar align="end" selectedDate={selectedDate} onDayPicked={({ date }) => setSelectedDate(date)} />
           </div>
-          <p className="mb-4 text-sm text-slate-600">需提前 7 天預約，最早可選 {formatDateTime(earliestBookingDate()).numericDate}。</p>
+          <p className="mb-4 text-sm text-slate-600">{t("需提前 7 天預約，最早可選")} {formatDateTime(earliestBookingDate()).numericDate}。</p>
           <div className="overflow-x-auto pb-1">
             <div className="grid min-w-[560px] grid-cols-7 gap-2">
             {dates.map((date) => {
@@ -116,8 +118,8 @@ function VenuePageContent({ selection }) {
             </div>
           </div>
         </section>
-        {error && <section role="alert" className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700 sm:p-6">場地資料載入失敗：{error}</section>}
-        {!loading && !error && filteredFields.length === 0 && <section role="status" aria-label="場地搜尋結果" className="mb-8 rounded-2xl border border-slate-200 bg-white p-4 text-slate-600 shadow-sm sm:p-6">目前沒有提供{selectedSport?.name}場面的場館。</section>}
+        {error && <section role="alert" className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700 sm:p-6">{t("場地資料載入失敗：")}{error}</section>}
+        {!loading && !error && filteredFields.length === 0 && <section role="status" aria-label={t("場地搜尋結果")} className="mb-8 rounded-2xl border border-slate-200 bg-white p-4 text-slate-600 shadow-sm sm:p-6">{t("目前沒有提供")}{selectedSport?.name}{t("場面的場館。")}</section>}
       </main>
       {!loading && !error && filteredFields.length > 0 && <VenueBookingCards key={selectedSport?.id} fields={filteredFields} selectedDate={selectedDate} selectedVenueId={selectedVenueId} sportFilter={selectedSport?.id} />}
     </div>

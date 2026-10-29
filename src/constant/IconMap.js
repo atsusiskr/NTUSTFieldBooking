@@ -1,5 +1,5 @@
 import {
-  Droplet, ShowerHead, Shirt, Users, LampCeiling, Wifi, Toilet, BriefcaseMedical, Accessibility, AirVent,
+  Droplet, ShowerHead, Shirt, Users, LampCeiling, Wifi, BriefcaseMedical, Accessibility, AirVent,
   Volleyball,
   MapPinned,
   Clock2,

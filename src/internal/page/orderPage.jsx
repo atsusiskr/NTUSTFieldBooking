@@ -1,3 +1,4 @@
+import { useTranslation, translate } from "../../locale/i18n";
 import { useState, useEffect } from "react";
 import api from "../../baseApi"
 import { bookingService } from "../../service/bookingService";
@@ -7,6 +8,7 @@ import { formatBookingDateTime } from "../../utils/bookingDateTime";
 import { describeRequestError } from "../../utils/requestError";
 
 function OrderPage() {
+  const t = useTranslation();
     const [orders, setOrders] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -108,7 +110,7 @@ function OrderPage() {
         e.target.value = "";
 
         if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-            setPdfImportError(new Error("請選擇 PDF 檔案"));
+            setPdfImportError(new Error(translate("請選擇 PDF 檔案")));
             return;
         }
 
@@ -145,13 +147,13 @@ function OrderPage() {
     return (
         <div>
             <Navbar />
-            <Loading isLoading={loading} text="取得訂單資料中..." />
-            {error && <p>取得訂單資料失敗：{describeRequestError(error).message}</p>}
-            {pdfImportError && <p className="text-red-600 text-center mt-2">匯入 PDF 失敗: {pdfImportError.message}</p>}
+            <Loading isLoading={loading} text={t("取得訂單資料中...")} />
+            {error && <p>{t("取得訂單資料失敗：")}{describeRequestError(error).message}</p>}
+            {pdfImportError && <p className="text-red-600 text-center mt-2">{t("匯入 PDF 失敗:")} {pdfImportError.message}</p>}
             {!loading && orders &&
                 (
                     <div>
-                        <h1 class="text-3xl font-bold text-center my-8">我的預約</h1>
+                        <h1 class="text-3xl font-bold text-center my-8">{t("我的預約")}</h1>
                         <ul>
                             {sortedItems.map((order) => (
                                 <li key={order.id} className={`flex flex-row sm:justify-between w-full md:w-[60%] h-[130px] mx-auto my-3 border border-blue-200 rounded-md ${order.status === "cancelled" ? "opacity-40" : ""}`}>
@@ -174,17 +176,17 @@ function OrderPage() {
                                                     className="hover:bg-blue-700 hover:text-white border-2 border-dashed border-blue-400 text-blue-400 font-semibold py-1 px-2 rounded-md whitespace-nowrap"
                                                     onClick={() => document.getElementById(`pdf-input-${order.id}`)?.click()}
                                                 >
-                                                    上傳計畫書(.pdf)
+                                                    {t("上傳計畫書(.pdf)")}
                                                 </button>
                                             </div>
                                         </div>
-                                        <p className="text-start text-md text-gray-400">預約時間：{order.start_time ? `${formatBookingDateTime(order.start_time, order).date} ${formatBookingDateTime(order.start_time, order).time} - ${formatBookingDateTime(order.end_time, order).time}` : ""}</p>
+                                        <p className="text-start text-md text-gray-400">{t("預約時間：")}{order.start_time ? `${formatBookingDateTime(order.start_time, order).date} ${formatBookingDateTime(order.start_time, order).time} - ${formatBookingDateTime(order.end_time, order).time}` : ""}</p>
                                     </div>
 
                                     <div className=" flex flex-col h-auto items-end justify-between p-4">
                                         <p className="text-lg font-semibold" >
                                             <span className={statusStyle[order.status].class +  " px-2 py-1 rounded-md ml-2 font-normal"}>
-                                                {statusStyle[order.status].label}
+                                                {t(statusStyle[order.status].label)}
                                             </span>
                                         </p>
                                         {!cancellingIds.has(order.id) && !["cancelled", "cancel_requested", "cancelled_request"].includes(order.status) && !order._cancelRequested && (
@@ -192,7 +194,7 @@ function OrderPage() {
                                                 className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md"
                                                 onClick={() => openCancelModal(order)}
                                             >
-                                                取消預約
+                                                {t("取消預約")}
                                             </button>
                                         )}
 
@@ -207,9 +209,9 @@ function OrderPage() {
                     <div className="absolute inset-0 bg-black/40" onClick={closeCancelModal} />
 
                     <div className="relative w-[92%] max-w-md rounded-xl bg-white p-6 shadow-xl">
-                        <h2 className="text-xl font-bold text-gray-900">確認取消預約？</h2>
+                        <h2 className="text-xl font-bold text-gray-900">{t("確認取消預約？")}</h2>
                         <p className="mt-2 text-gray-600">
-                            你確定要取消「{selectedCancelOrder?.resourceName || ""}」這筆預約嗎？
+                            {t("你確定要取消「")}{selectedCancelOrder?.resourceName || ""}{t("」這筆預約嗎？")}
                         </p>
                         <p className="mt-1 text-sm text-gray-500">
                             {selectedCancelOrder?.start ? formatBookingDateTime(selectedCancelOrder.start, { booking_series_id: selectedCancelOrder.bookingSeriesId }).date : ""}
@@ -218,7 +220,7 @@ function OrderPage() {
                                 ? `${formatBookingDateTime(selectedCancelOrder.start, { booking_series_id: selectedCancelOrder.bookingSeriesId }).time} - ${formatBookingDateTime(selectedCancelOrder.end, { booking_series_id: selectedCancelOrder.bookingSeriesId }).time}`
                                 : ""}
                         </p>
-                        {cancelActionError && <p role="alert" className="mt-3 text-sm text-red-600">取消申請失敗：{describeRequestError(cancelActionError).message}</p>}
+                        {cancelActionError && <p role="alert" className="mt-3 text-sm text-red-600">{t("取消申請失敗：")}{describeRequestError(cancelActionError).message}</p>}
 
                         <div className="mt-6 flex gap-3">
                             <button
@@ -226,7 +228,7 @@ function OrderPage() {
                                 className="flex-1 rounded-lg border border-gray-300 py-2 font-semibold text-gray-700 hover:bg-gray-50"
                                 onClick={closeCancelModal}
                             >
-                                先不要
+                                {t("先不要")}
                             </button>
                             <button
                                 type="button"
@@ -234,7 +236,7 @@ function OrderPage() {
                                 onClick={confirmCancel}
                                 disabled={cancellingIds.has(selectedCancelOrder?.id)}
                             >
-                                {cancellingIds.has(selectedCancelOrder?.id) ? "送出中..." : "確認取消"}
+                                {cancellingIds.has(selectedCancelOrder?.id) ? t("送出中...") : t("確認取消")}
                             </button>
                         </div>
                     </div>

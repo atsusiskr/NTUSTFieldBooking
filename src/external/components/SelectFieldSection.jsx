@@ -1,8 +1,10 @@
+import { useTranslation, translate } from "../../locale/i18n";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatDateTime } from "../../utils/dateTimeFormat";
 
 function SelectFieldSection({ fields, fieldChecked = null, selectedDate, defaultViewMode }) {
+  const t = useTranslation();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState(defaultViewMode || "byDate");
   const [selectedSlots, setSelectedSlots] = useState(null);
@@ -116,7 +118,7 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
           <thead>
             <tr>
               <th className="sticky left-0 w-32 z-30 px-4 py-2 border whitespace-nowrap border-gray-300 bg-blue-100">
-                時段
+                {t("時段")}
               </th>
 
               {fields.map((field, idx) => {
@@ -175,7 +177,7 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
                                   ? "bg-gray-200 text-gray-500"
                                   : "bg-blue-100 text-blue-600 hover:bg-blue-200"
                                 } w-8 h-10 rounded-full font-semibold flex items-center justify-center transition`}
-                              title={`第 ${i + 1} 面場地 / ${start}-${end}`}
+                              title={translate("第 {value0} 面場地 / {value1}-{value2}", { value0: i + 1, value1: start, value2: end })}
                             >
                               {i + 1}
                             </button>
@@ -201,7 +203,7 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
           <thead>
             <tr>
               <th className="sticky text-lg left-0 z-30 px-4 py-2 border whitespace-nowrap border-gray-300 bg-blue-100">
-                {fieldChecked ? fields[fieldChecked.idx].name : "場地"}
+                {fieldChecked ? fields[fieldChecked.idx].name : t("場地")}
               </th>
 
               {sevenDays.map((day, idx) => {
@@ -229,7 +231,7 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
                   colSpan={sevenDays.length + 1}
                   className="font-bold text-2xl px-4 py-16 text-center align-middle text-gray-500 border border-gray-300"
                 >
-                  請先選擇場地
+                  {t("請先選擇場地")}
                 </td>
               </tr>
             ) : (
@@ -299,7 +301,7 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
           onClick={() => setViewMode(viewMode === "byDate" ? "byPlace" : "byDate")}
           className="bg-blue-500 md:bg-blue-300 my-4 px-4 py-1 rounded text-white hover:bg-blue-500 transition"
         >
-          切換為 {viewMode === "byDate" ? "單場地七日" : "單日多場地"}
+          {t("切換為")} {viewMode === "byDate" ? t("單場地七日") : t("單日多場地")}
         </button>
         )}
       </div>
@@ -314,12 +316,12 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
             {(() => {
               const startHour = Math.min(...selectedSlots.hours);
               const endHour = Math.max(...selectedSlots.hours) + 1;
-              return `你已選擇：${formatDateTime(startHour, { input: "hour" }).time} - ${formatDateTime(endHour, { input: "hour" }).time}`;
+              return translate("你已選擇：{value0} - {value1}", { value0: formatDateTime(startHour, { input: "hour" }).time, value1: formatDateTime(endHour, { input: "hour" }).time });
             })()}
             <br />
-            {`場地：${fields[selectedSlots.fieldIdx].name} / 第 ${selectedSlots.resourceIdx + 1} 面`}
+            {translate("場地：{value0} / 第 {value1} 面", { value0: fields[selectedSlots.fieldIdx].name, value1: selectedSlots.resourceIdx + 1 })}
             <br />
-            {`總金額：NT$ ${getSelectedTotalPrice()}`}
+            {translate("總金額：NT$ {value0}", { value0: getSelectedTotalPrice() })}
           </div>
 
           <div className="flex-1" />
@@ -344,7 +346,7 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
             }}
             className="bg-green-500 text-white w-[150px] md:px-8 py-2.5 border-gray-300 rounded-lg shadow-xl hover:bg-green-600 transition font-semibold"
           >
-            完成預約
+            {t("完成預約")}
           </button>
         </div>
       )

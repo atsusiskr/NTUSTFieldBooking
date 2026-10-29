@@ -1,18 +1,21 @@
-const EMPTY = {
-    date: "未定日期",
-    time: "未定時間",
-    fullDate: "未定日期",
-    numericDate: "未定日期",
-    monthDay: "未定日期",
+import { getLocale, translate } from "../locale/i18n";
+
+const emptyDateTime = () => ({
+    date: translate("未定日期"),
+    time: translate("未定時間"),
+    fullDate: translate("未定日期"),
+    numericDate: translate("未定日期"),
+    monthDay: translate("未定日期"),
     weekday: "",
     weekdayShort: "",
-    shortDate: "未定日期",
-};
+    shortDate: translate("未定日期"),
+});
 
 const pad = (value) => String(value).padStart(2, "0");
 
 // 轉換各種日期格式。
 export const formatDateTime = (value, options = {}) => {
+    const EMPTY = emptyDateTime();
     if (value === null || value === undefined || value === "") return EMPTY;
 
     if (options.input === "hour") {
@@ -51,22 +54,23 @@ export const formatDateTime = (value, options = {}) => {
     const year = useUtcClock ? dateTime.getUTCFullYear() : dateTime.getFullYear();
     const month = useUtcClock ? dateTime.getUTCMonth() + 1 : dateTime.getMonth() + 1;
     const day = useUtcClock ? dateTime.getUTCDate() : dateTime.getDate();
-    const dayOfWeek = useUtcClock ? dateTime.getUTCDay() : dateTime.getDay();
 
-    const date = new Intl.DateTimeFormat("zh-TW", {
+    const locale = getLocale();
+    const date = new Intl.DateTimeFormat(locale, {
         month: "long", day: "numeric", weekday: "long", ...timeZone,
     }).format(dateTime);
-    const fullDate = new Intl.DateTimeFormat("zh-TW", {
+    const fullDate = new Intl.DateTimeFormat(locale, {
         year: "numeric", month: "long", day: "numeric", ...timeZone,
     }).format(dateTime);
-    const time = new Intl.DateTimeFormat("zh-TW", {
+    const time = new Intl.DateTimeFormat(locale, {
         hour: "2-digit", minute: "2-digit", hourCycle: "h23", ...timeZone,
     }).format(dateTime);
     const numericDate = `${year}/${pad(month)}/${pad(day)}`;
     const monthDay = `${month}/${day}`;
-    const weekdayShort = ["日", "一", "二", "三", "四", "五", "六"][dayOfWeek];
-    const weekday = `週${weekdayShort}`;
-    const shortDate = `${monthDay}（${weekday}）`;
+    const weekdayShort = new Intl.DateTimeFormat(locale, { weekday: "narrow", ...timeZone }).format(dateTime);
+    const weekday = locale === "zh-TW" ? `週${weekdayShort}`
+        : new Intl.DateTimeFormat(locale, { weekday: "short", ...timeZone }).format(dateTime);
+    const shortDate = locale === "zh-TW" ? `${monthDay}（${weekday}）` : `${monthDay} (${weekday})`;
 
     return { date, time, fullDate, numericDate, monthDay, weekday, weekdayShort, shortDate };
 };

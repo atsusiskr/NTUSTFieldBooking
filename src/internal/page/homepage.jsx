@@ -1,19 +1,18 @@
-import { useEffect, useState, useRef } from "react";
+import { useTranslation } from "../../locale/i18n";
+import { useEffect, useState } from "react";
 import Loading from "../../components/loading";
 import Navbar from "../components/navbar";
 import { useParams } from "react-router-dom";
 import SelectFieldSection from "../components/SelectFieldSection";
 import Calendar from "../../components/dayPicker/dayPick";
-import NearbyMap from "../components/nearbyMap";
 import api from "../../baseApi";
 
 function Homepage() {
+  const t = useTranslation();
   const { token } = useParams();
-  const tableRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [fieldType, setFieldType] = useState("all");
   const [filteredFields, setFilteredFields] = useState([]);
-  const [confirmIdx, setConfirmIdx] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
@@ -50,30 +49,19 @@ function Homepage() {
         if (!cancelled) {
           setLoading(false);
         }
-        console.log("載入場地資料完成", filteredFields);
 
       }
     }
     loadFields();
-  }, []);
-
-  const handleScrollToColumn = ({ idx, place } = {}) => {
-    if (idx === null || idx === undefined) return;
-
-    setConfirmIdx({ idx, place });
-
-    requestAnimationFrame(() => {
-      tableRef.current?.scrollIntoView({ behavior: 'smooth' });
-    })
-  };
+  }, [fieldType, token]);
 
   return (
     <div className="homepage">
       <Navbar />
-      <Loading isLoading={loading} text="載入場地資料中..." />
+      <Loading isLoading={loading} text={t("載入場地資料中...")} />
       <div className="flex flex-col md:flex-row justify-center items-center m-4 gap-4">
         <div className="flex text-xl font-semibold">
-          預約日期 :
+          {t("預約日期 :")}
         </div>
         <Calendar onDayPicked={({ date }) => {
           setSelectedDate(date);
@@ -89,13 +77,13 @@ function Homepage() {
             className={`px-4 py-2 mt-3 rounded-md text-white transition ${fieldType === type ? "bg-blue-700" : "bg-blue-400 hover:bg-blue-600"
               }`}
           >
-            {type}
+            {t(type)}
           </button>
         ))}
       </div>
 
-      <div ref={tableRef}>
-        <SelectFieldSection token={token} fields={filteredFields} fieldChecked={confirmIdx} selectedDate={selectedDate} />
+      <div>
+        <SelectFieldSection token={token} fields={filteredFields} selectedDate={selectedDate} />
       </div>
     </div>
   );

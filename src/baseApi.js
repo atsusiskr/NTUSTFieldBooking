@@ -6,19 +6,36 @@ const API_BASE_URL =
 
 const instance = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-//在實作上加入攔截器，每當執行的api不是auth的時候，才會把token放入header中
+let refreshPromise;
+
+export function refreshSession() {
+  if (!refreshPromise) {
+    const tokenBeforeRefresh = useAuthStore.getState().token;
+    refreshPromise = instance.post("/auth/refresh").then(({ data }) => {
+      if (!data?.access_token || !data?.user?.id) {
+        throw new Error("Session refresh did not return an access token and user");
+      }
+      if (useAuthStore.getState().token === tokenBeforeRefresh) {
+        useAuthStore.getState().setAuth(data);
+      }
+      return data;
+    }).finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+}
+
+// Attach the current session token when available.
 instance.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
-  const isAuth = config.url?.includes("auth");
 
-
-  if (token) {
+  if (token && !config.url?.startsWith("/auth/")) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -26,20 +43,25 @@ instance.interceptors.request.use((config) => {
 });
 
 instance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  //如果回傳的代碼是401且不是處理login的話，將處理錯誤
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      const url = error.config.url;
-
-      if (!url.includes("auth")) {
-        useAuthStore.getState().setLogout();
-        window.location.href = "/";
-      }
+  (response) => response,
+  async (error) => {
+    const request = error.config;
+    if (error.response?.status !== 401 || !request || request._retriedAfterRefresh || request.url?.startsWith("/auth/")) {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+    request._retriedAfterRefresh = true;
+    try {
+      await refreshSession();
+      return instance(request);
+    } catch (refreshError) {
+      if (refreshError.response?.status === 401) {
+        useAuthStore.getState().setLogout();
+        if (window.location.pathname.startsWith("/external/") || window.location.pathname.startsWith("/ntust/")) {
+          window.location.assign("/");
+        }
+      }
+      return Promise.reject(refreshError);
+    }
   },
 );
 

@@ -1,3 +1,4 @@
+import { useTranslation } from "../locale/i18n";
 import noUiSlider from "nouislider"
 import HSRangeSlider from "@preline/range-slider/non-auto";
 import { useRef, useEffect, useMemo } from "react";
@@ -13,9 +14,10 @@ export function SingleSlide({ value = [1, 10], onChange }) {
 }
 
 export function DoubleSlide({ value, onChange, levels = EMPTY_LEVELS }) {
+  const t = useTranslation();
     const sliderRef = useRef(null);
     const orderedLevels = useMemo(() => [...levels].sort((a, b) => a.level - b.level), [levels]);
-    const getLabel = (level) => orderedLevels.find((item) => item.level === level)?.label ?? "未設定";
+    const getLabel = (level) => orderedLevels.find((item) => item.level === level)?.label ?? t("未設定");
     const range = useMemo(() => {
         if (!orderedLevels.length) return null;
         const result = { min: orderedLevels[0].level, max: orderedLevels[orderedLevels.length - 1].level };
@@ -69,11 +71,11 @@ export function DoubleSlide({ value, onChange, levels = EMPTY_LEVELS }) {
         <div className="min-w-0 space-y-2">
             <div className="grid grid-cols-2 gap-3">
                 <div className="flex min-w-0 items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2">
-                    <span className="shrink-0 text-xs text-slate-500">最低</span>
+                    <span className="shrink-0 text-xs text-slate-500">{t("最低")}</span>
                     <span className="break-words text-right text-sm font-semibold text-blue-600">{getLabel(selectedValue[0])}</span>
                 </div>
                 <div className="flex min-w-0 items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2">
-                    <span className="shrink-0 text-xs text-slate-500">最高</span>
+                    <span className="shrink-0 text-xs text-slate-500">{t("最高")}</span>
                     <span className="break-words text-right text-sm font-semibold text-blue-600">{getLabel(selectedValue[1])}</span>
                 </div>
             </div>
@@ -97,7 +99,7 @@ export function DoubleSlide({ value, onChange, levels = EMPTY_LEVELS }) {
                     }
                 })}
             />
-            </div> : <p className="text-xs text-slate-500">目前僅提供此程度</p>}
+            </div> : <p className="text-xs text-slate-500">{t("目前僅提供此程度")}</p>}
         </div>
     )
 }

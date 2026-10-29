@@ -1,4 +1,4 @@
-import { formatDateTime } from "../utils/dateTimeFormat";
+import { formatDateTime } from "../../utils/dateTimeFormat";
 
 export const bookingSlotKey = (resourceId, date, hour) => `${resourceId}|${date}|${hour}`;
 

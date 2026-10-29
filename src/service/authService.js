@@ -13,27 +13,21 @@ export const loginService = async (email, password) => {
   return res.data;
 };
 
-// The ID token is issued by LINE through LIFF. The server must verify it with
-// LINE before it creates a session or returns an access token.
-export const loginWithLineService = async (idToken) => {
-  const res = await api.post("/auth/line/login", { id_token: idToken });
+export const loginWithLineService = async ({ code, redirectUri, codeVerifier, nonce }) => {
+  const res = await api.post("/auth/line", {
+    code,
+    redirect_uri: redirectUri,
+    code_verifier: codeVerifier,
+    nonce,
+  });
+  if (!res.data?.access_token || !res.data?.user?.id) {
+    throw new Error("LINE 登入回應缺少網站登入資訊。");
+  }
+  useAuthStore.getState().setAuth(res.data);
   return res.data;
 };
 
-export const registerWithLineService = async ({ registrationToken, username, displayName, gender, birthDate, email }) => {
-  const res = await api.post("/auth/line/register", {
-    registration_token: registrationToken,
-    username,
-    display_name: displayName,
-    gender,
-    birth_date: birthDate,
-    email: email || undefined,
-  });
-
-  if (!res.data?.access_token) {
-    throw new Error("LINE registration did not return an access token");
-  }
-
-  useAuthStore.getState().setAuth(res.data);
-  return res.data;
+export const logoutService = async () => {
+  await api.post("/auth/logout");
+  useAuthStore.getState().setLogout();
 };

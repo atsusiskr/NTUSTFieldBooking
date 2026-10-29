@@ -1,17 +1,17 @@
+import { useTranslation, translate } from "../../locale/i18n";
 import { useState, useEffect } from "react";
 import Navbar from "../components/navbar";
 import Loading from "../../components/loading";
 import { bookingService } from "../../service/bookingService";
 import { pickUpService } from "../../service/pickUpService";
-import { statusMap } from "../../constant/statusMap";
+import { statusMap, getStatusLabel } from "../../constant/statusMap";
 import { formatDateTime } from "../../utils/dateTimeFormat";
 import { sportIconMap, functionIconMap } from "../../constant/IconMap";
-import { zhTWDictionary } from "../../locale/zh-TW/translate";
 import { MapPinned } from "lucide-react";
 import PickUpDetailPopUp from "../components/pickUp/pickUpDetailPopUp";
-import { isRegistrationClosed } from "../pickUpTiming";
-import { getHistoricalOrders, isOrderExpired, sortOrdersForDisplay } from "../orderDisplay";
-import { getPickUpPartyDetails } from "../pickUpOrderDetails";
+import { isRegistrationClosed } from "../utils/pickUpTiming";
+import { getHistoricalOrders, isOrderExpired, sortOrdersForDisplay } from "../utils/orderDisplay";
+import { getPickUpPartyDetails } from "../utils/pickUpOrderDetails";
 import { describeRequestError } from "../../utils/requestError";
 import { bookingTimestamp, formatBookingDateTime } from "../../utils/bookingDateTime";
 
@@ -56,6 +56,7 @@ const resourceSportCodes = {
 };
 
 function OrderSportTag({ order }) {
+    const t = useTranslation();
     const sport = order.sport;
     const resourceType = order.resource?.resource_type?.toLowerCase();
     const code = (typeof sport === "string" ? sport : sport?.code) || resourceSportCodes[resourceType];
@@ -65,7 +66,7 @@ function OrderSportTag({ order }) {
     return (
         <span className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-2 py-1 text-sm font-normal text-gray-600">
             {sportIconMap[code]?.icon}
-            {name}
+            {t(name)}
         </span>
     );
 }
@@ -73,25 +74,27 @@ function OrderSportTag({ order }) {
 const genderLabels = { male: "男性", female: "女性", other: "其他" };
 
 function PickUpPartyInfo({ details }) {
-    return <section aria-label="團體報名資訊" className="mt-3 rounded-lg border border-blue-100 bg-blue-50/60 p-3 text-sm text-slate-700">
+  const t = useTranslation();
+    return <section aria-label={t("團體報名資訊")} className="mt-3 rounded-lg border border-blue-100 bg-blue-50/60 p-3 text-sm text-slate-700">
         <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="font-bold text-blue-800">團體報名 · {details.partySize} 人（含本人）</h3>
+            <h3 className="font-bold text-blue-800">{t("團體報名 ·")} {details.partySize} {t("人（含本人）")}</h3>
         </div>
-        <p className="mt-3 font-semibold text-slate-700">成員資料</p>
+        <p className="mt-3 font-semibold text-slate-700">{t("成員資料")}</p>
         {details.members.length > 0 ? <ol className="mt-2 grid gap-2 sm:grid-cols-2">
             {details.members.map((member, index) => <li key={index} className="rounded-lg border border-blue-100 bg-white p-3">
-                <p className="font-semibold text-slate-900">第 {index + 1} 位 · {index === 0 ? "本人" : `團員 ${index}`}</p>
-                <p className="mt-1 text-slate-600">性別：{genderLabels[member?.gender] || "未提供"}</p>
-                <p className="text-slate-600">程度：{member?.skill_level !== null && member?.skill_level !== undefined && member?.skill_level !== ""
-                    ? member.skill_level : "未提供"}</p>
+                <p className="font-semibold text-slate-900">{t("第")} {index + 1} {t("位 ·")} {index === 0 ? t("本人") : translate("團員 {value0}", { value0: index })}</p>
+                <p className="mt-1 text-slate-600">{t("性別：{gender}", { gender: t(genderLabels[member?.gender] || "未提供") })}</p>
+                <p className="text-slate-600">{t("程度：")}{member?.skill_level !== null && member?.skill_level !== undefined && member?.skill_level !== ""
+                    ? member.skill_level : t("未提供")}</p>
             </li>)}
-        </ol> : <p className="mt-2 text-slate-500">這筆訂單尚未提供成員資料。</p>}
+        </ol> : <p className="mt-2 text-slate-500">{t("這筆訂單尚未提供成員資料。")}</p>}
         {details.members.length > 0 && details.members.length < details.partySize &&
-            <p className="mt-2 text-slate-500">其餘 {details.partySize - details.members.length} 位成員資料尚未提供。</p>}
+            <p className="mt-2 text-slate-500">{t("其餘")} {details.partySize - details.members.length} {t("位成員資料尚未提供。")}</p>}
     </section>;
 }
 
 export default function OrderPage({ historyOnly = false }) {
+  const t = useTranslation();
     const [orders, setOrders] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -245,12 +248,12 @@ export default function OrderPage({ historyOnly = false }) {
     return (
         <div className="app-page pb-12 text-slate-900">
             <Navbar />
-            <Loading isLoading={loading} text="取得訂單資料中..." />
-            {error && <p>取得訂單資料失敗：{describeRequestError(error).message}</p>}
+            <Loading isLoading={loading} text={t("取得訂單資料中...")} />
+            {error && <p>{t("取得訂單資料失敗：")}{describeRequestError(error).message}</p>}
             {!loading && orders &&
                 (
                     <div>
-                        <h1 className="text-3xl font-bold text-center my-8">{historyOnly ? "歷史預約" : "我的預約"}</h1>
+                        <h1 className="text-3xl font-bold text-center my-8">{historyOnly ? t("歷史預約") : t("我的預約")}</h1>
 
                         {/* Tab Buttons */}
                         {!historyOnly && <div className="flex justify-center w-full mb-6">
@@ -262,7 +265,7 @@ export default function OrderPage({ historyOnly = false }) {
                                         }`}
                                     onClick={() => setActiveTab("pickup")}
                                 >
-                                    臨打團
+                                    {t("臨打團")}
                                 </button>
 
                                 <button
@@ -272,7 +275,7 @@ export default function OrderPage({ historyOnly = false }) {
                                         }`}
                                     onClick={() => setActiveTab("booking")}
                                 >
-                                    場地預約
+                                    {t("場地預約")}
                                 </button>
 
                             </div>
@@ -281,7 +284,7 @@ export default function OrderPage({ historyOnly = false }) {
                         {/* Order List */}
                         {visibleOrders.length === 0 && (
                             <p className="mx-auto w-[95%] rounded-xl border border-gray-200 bg-white px-5 py-10 text-center text-gray-500 md:w-[50%]">
-                                {activeTab === "history" ? "目前沒有歷史預約" : "目前沒有進行中或即將開始的預約"}
+                                {activeTab === "history" ? t("目前沒有歷史預約") : t("目前沒有進行中或即將開始的預約")}
                             </p>
                         )}
                         <ul>
@@ -304,7 +307,7 @@ export default function OrderPage({ historyOnly = false }) {
                                     <div
                                         role={isPickupOrder ? "button" : undefined}
                                         tabIndex={isPickupOrder ? 0 : undefined}
-                                        aria-label={isPickupOrder ? `查看${order.title}臨打團詳細資訊` : undefined}
+                                        aria-label={isPickupOrder ? translate("查看{value0}臨打團詳細資訊", { value0: order.title }) : undefined}
                                         onKeyDown={isPickupOrder ? (event) => {
                                             if (event.key === "Enter" || event.key === " ") {
                                                 event.preventDefault();
@@ -320,27 +323,27 @@ export default function OrderPage({ historyOnly = false }) {
                                                     ? `${order.location?.name} ${order.resource ? `- ${order.resource.name}` : ""}`
                                                     : `${order.title}`}
                                             </h2>
-                                            {activeTab === "history" && <span className="rounded-md bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">{isPickupOrder ? "臨打團" : "場地預約"}</span>}
+                                            {activeTab === "history" && <span className="rounded-md bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600">{isPickupOrder ? t("臨打團") : t("場地預約")}</span>}
                                             {isPickupOrder && <span className="rounded-md bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-700">
-                                                {partyDetails ? `團體報名 · ${partyDetails.partySize} 人` : "個人報名"}
+                                                {partyDetails ? translate("團體報名 · {value0} 人", { value0: partyDetails.partySize }) : t("個人報名")}
                                             </span>}
                                             <OrderSportTag order={order} />
                                             {startingSoon && (
-                                                <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-bold text-amber-800">即將開始 · 24 小時內</span>
+                                                <span className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-bold text-amber-800">{t("即將開始 · 24 小時內")}</span>
                                             )}
                                         </div>
                                         <div className={`shrink-0 px-3 py-1 rounded-md font-bold text-white font-medium ${statusMap[order.status]?.class || ""}`}>
-                                            {statusMap[order.status]?.label || order.status}
+                                            {getStatusLabel(order.status, t)}
                                         </div>
                                     </div>
 
                                     {/* 詳細資訊 */}
                                     <div className="text-sm text-gray-600 mb-4">
-                                        <p>日期：{start.date}</p>
-                                        <p>時間：{start.time} - {end.time}</p>
-                                        <p>地點：{order.location?.name || "未指定"}</p>
+                                        <p>{t("日期：")}{start.date}</p>
+                                        <p>{t("時間：")}{start.time} - {end.time}</p>
+                                        <p>{t("地點：")}{order.location?.name || t("未指定")}</p>
                                     </div>
-                                    {isPickupOrder && <p className="mb-3 text-sm font-semibold text-blue-600">點擊查看臨打團詳細資訊 →</p>}
+                                    {isPickupOrder && <p className="mb-3 text-sm font-semibold text-blue-600">{t("點擊查看臨打團詳細資訊 →")}</p>}
                                     </div>
                                     {partyDetails && <PickUpPartyInfo details={partyDetails} />}
                                     {activeTab === "pickup" && order.status === "confirmed" && (
@@ -348,8 +351,8 @@ export default function OrderPage({ historyOnly = false }) {
                                             ? "bg-amber-50 font-semibold text-amber-900"
                                             : "bg-blue-50 text-blue-800"}`}>
                                             {pickupCancellationClosed
-                                                ? "距離活動開始不到 24 小時，已無法取消報名。"
-                                                : "活動開始前 24 小時內將無法取消報名。"}
+                                                ? t("距離活動開始不到 24 小時，已無法取消報名。")
+                                                : t("活動開始前 24 小時內將無法取消報名。")}
                                         </p>
                                     )}
 
@@ -357,7 +360,7 @@ export default function OrderPage({ historyOnly = false }) {
                                     <div className="flex flex-wrap justify-end gap-2 mt-4 pt-4 border-t border-gray-100">
                                         {directionsUrl && (
                                             <a href={directionsUrl} target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 sm:w-auto">
-                                                <MapPinned size={16} aria-hidden="true" />Google Maps 導航
+                                                <MapPinned size={16} aria-hidden="true" />{t("Google Maps 導航")}
                                             </a>
                                         )}
                                         {activeTab !== "history" && !pickupCancellationClosed && !cancellingIds.has(order.id) && !["cancelled", "cancel_request", "cancelled_request"].includes(order.status) && !order._cancelRequested && (
@@ -365,7 +368,7 @@ export default function OrderPage({ historyOnly = false }) {
                                                 className="w-full sm:w-auto border border-red-500 text-red-600 bg-white hover:bg-red-50 text-sm font-semibold py-2 px-6 rounded-lg transition"
                                                 onClick={(event) => { event.stopPropagation(); openCancelModal(order); }}
                                             >
-                                                取消預約
+                                                {t("取消預約")}
                                             </button>
                                         )}
                                     </div>
@@ -381,15 +384,15 @@ export default function OrderPage({ historyOnly = false }) {
                     <div className="absolute inset-0 bg-black/40" onClick={closeCancelModal} />
 
                     <div className="relative w-[92%] max-w-md rounded-xl bg-white p-6 shadow-xl">
-                        <h2 className="text-xl font-bold text-gray-900">確認取消預約？</h2>
+                        <h2 className="text-xl font-bold text-gray-900">{t("確認取消預約？")}</h2>
                         <p className="mt-2 text-gray-600">
-                            你確定要取消「{selectedCancelOrder?.ordereName || ""}」這筆預約嗎？
+                            {t("你確定要取消「")}{selectedCancelOrder?.ordereName || ""}{t("」這筆預約嗎？")}
                         </p>
                         <div className="mt-1 text-sm text-gray-500">
-                            <p>日期：{cancelStart.date}</p>
-                            <p>時間：{cancelStart.time} - {cancelEnd.time}</p>
+                            <p>{t("日期：")}{cancelStart.date}</p>
+                            <p>{t("時間：")}{cancelStart.time} - {cancelEnd.time}</p>
                         </div>
-                        {cancelActionError && <p role="alert" className="mt-3 text-sm text-red-600">取消申請失敗：{describeRequestError(cancelActionError).message}</p>}
+                        {cancelActionError && <p role="alert" className="mt-3 text-sm text-red-600">{t("取消申請失敗：")}{describeRequestError(cancelActionError).message}</p>}
 
                         <div className="mt-6 flex gap-3">
                             <button
@@ -397,7 +400,7 @@ export default function OrderPage({ historyOnly = false }) {
                                 className="flex-1 rounded-lg border border-gray-300 py-2 font-semibold text-gray-700 hover:bg-gray-50"
                                 onClick={closeCancelModal}
                             >
-                                先不要
+                                {t("先不要")}
                             </button>
                             <button
                                 type="button"
@@ -405,7 +408,7 @@ export default function OrderPage({ historyOnly = false }) {
                                 onClick={confirmCancel}
                                 disabled={cancellingIds.has(selectedCancelOrder?.id)}
                             >
-                                {cancellingIds.has(selectedCancelOrder?.id) ? "送出中..." : "確認取消"}
+                                {cancellingIds.has(selectedCancelOrder?.id) ? t("送出中...") : t("確認取消")}
                             </button>
                         </div>
                     </div>
@@ -430,7 +433,7 @@ export default function OrderPage({ historyOnly = false }) {
                 className="fixed bottom-4 right-4 z-50 flex items-center justify-center gap-2 bg-gray-700 text-white px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
             >
                 <div>{functionIconMap.refresh.icon}</div>
-                <span className="font-bold tracking-wider">{zhTWDictionary.pickUpPage.button.refresh}</span>
+                <span className="font-bold tracking-wider">{t("pickUpPage.button.refresh")}</span>
             </button>
         </div>
     )

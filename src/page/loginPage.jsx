@@ -1,3 +1,4 @@
+import { useTranslation } from "../locale/i18n";
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -5,36 +6,25 @@ import Loading from "../components/loading";
 import { loginService } from "../service/authService";
 import { sportService } from "../service/sportService";
 import { errorPopup } from "../components/pop-up";
-import { zhTWDictionary } from "../locale/zh-TW/translate";
 import { functionIconMap } from "../constant/IconMap";
 import { useAuthPageTransition } from "../components/useAuthPageTransition";
 import { useSportStore } from "../store/sportStore";
 import { describeRequestError } from "../utils/requestError";
 import { isLineDemoMode } from "../config/lineMode";
+import { startLineAuthorization } from "../service/lineAuthorization";
 
 
 function LoginPage() {
+  const t = useTranslation();
   const [filter, setFilter] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
   const [sport, setSport] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [forSchool, setForSchool] = useState(false);
-  const [forLine, setForLine] = useState(false);
-  const [isFlipping, setIsFlipping] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const setSportId = useSportStore((state) => state.setSportId);
   const { isLeaving, switchPage } = useAuthPageTransition();
-
-  // const handleVersionFilp = () => {
-  //   setIsFlipping(true);
-  //   setTimeout(() => {
-  //     setForSchool(!forSchool);
-  //     setIsFlipping(false);
-  //   }, 300);
-  // }
 
   useEffect(() => {
     setLoading(true);
@@ -60,12 +50,11 @@ function LoginPage() {
     if (loading) return;
 
     if (!filter) {
-      errorPopup(zhTWDictionary.loginPage.errorMessage.error, zhTWDictionary.loginPage.errorMessage.requiredSportsType);
+      errorPopup(t("loginPage.errorMessage.error"), t("loginPage.errorMessage.requiredSportsType"));
       return;
     }
 
     setLoading(true);
-    setErrorMessage("");
 
     try {
       const form = new FormData(e.target);
@@ -73,23 +62,21 @@ function LoginPage() {
       const password = form.get("password");
 
       if (!email || !password) {
-        errorPopup(zhTWDictionary.loginPage.errorMessage.error, zhTWDictionary.loginPage.errorMessage.invalidCredentials);
+        errorPopup(t("loginPage.errorMessage.error"), t("loginPage.errorMessage.invalidCredentials"));
         setLoading(false);
         return;
       }
 
       await loginService(email, password);
-      // const baseUrl = forSchool ? "ntust" : "external";
-      // const typePath = forSchool ? "" : filter;
       setSportId(filter);
       navigate(`external/group`);
 
     } catch (error) {
       const failure = error?.message === "Invalid credentials" ? {
-        title: "登入錯誤", message: zhTWDictionary.loginPage.errorMessage.invalidCredentials,
+        title: t("loginPage.errorMessage.error"), message: t("loginPage.errorMessage.invalidCredentials"),
       } : describeRequestError(error, {
-        400: { title: "登入錯誤", message: zhTWDictionary.loginPage.errorMessage.invalidCredentials },
-        401: { title: "登入錯誤", message: zhTWDictionary.loginPage.errorMessage.invalidCredentials },
+        400: { title: t("loginPage.errorMessage.error"), message: t("loginPage.errorMessage.invalidCredentials") },
+        401: { title: t("loginPage.errorMessage.error"), message: t("loginPage.errorMessage.invalidCredentials") },
       });
       errorPopup(failure.title, failure.message);
       console.error("Login error:", error);
@@ -98,15 +85,24 @@ function LoginPage() {
     }
   };
 
-  const handleLineLogin = () => {
-    navigate("/line-login");
+  const handleLineLogin = async () => {
+    if (isLineDemoMode) {
+      navigate("/line-login");
+      return;
+    }
+    try {
+      setSportId(filter || sport[0]?.id || "badminton");
+      await startLineAuthorization();
+    } catch (error) {
+      errorPopup(t("LINE 登入失敗"), error.message);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-100 to-blue-300">
-      <Loading isLoading={loading} text={zhTWDictionary.loginPage.loadingMessage} />
+      <Loading isLoading={loading} text={t("loginPage.loadingMessage")} />
       <div className="w-[80%] max-w-md" style={{ perspective: "1200px" }}>
-        <div className={`auth-card ${isLeaving ? "auth-card-leaving" : ""} relative bg-white shadow-lg rounded-xl p-8 w-full max-w-md transition-transform duration-500 ease-in-out ${isFlipping ? "rotate-y-180" : ""}`}>
+        <div className={`auth-card ${isLeaving ? "auth-card-leaving" : ""} relative bg-white shadow-lg rounded-xl p-8 w-full max-w-md transition-transform duration-500 ease-in-out`}>
           <div className="flex flex-col items-center mb-4">
             <img
               src="/icon/logo.png"
@@ -114,38 +110,23 @@ function LoginPage() {
               className="w-14 h-14 mb-2"
             />
             <h1 className="text-2xl font-bold text-gray-800 leading-tight">
-              {zhTWDictionary.loginPage.title}
+              {t("loginPage.title")}
             </h1>
-            {/* <span className="text-sm text-gray-500 mt-1 tracking-wide">
-              {forSchool ? "學校版" : forLine ? "Line 登入" : "校外版"}
-            </span> */}
           </div>
-
-
-          {/* <div>
-            <button
-              onClick={() => handleVersionFilp()}
-              className="absolute top-8 right-8 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition flex flex-col items-center leading-tight"
-            >
-              <span className="text-sm font-semibold">切換版本</span>
-
-            </button>
-          </div> */}
-
 
           <form className="space-y-5" onSubmit={(e) => handleLogin(e)}>
             <div>
-              <label className="block text-start text-gray-600 mb-1" htmlFor="email">{zhTWDictionary.loginPage.input.label.email}</label>
+              <label className="block text-start text-gray-600 mb-1" htmlFor="email">{t("loginPage.input.label.email")}</label>
               <input
                 id="email"
                 name="email"
                 type="email"
-                placeholder={zhTWDictionary.loginPage.input.placeholder.email}
+                placeholder={t("loginPage.input.placeholder.email")}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
             <div>
-              <label className="block text-start text-gray-600 mb-1" htmlFor="password">{zhTWDictionary.loginPage.input.label.password}</label>
+              <label className="block text-start text-gray-600 mb-1" htmlFor="password">{t("loginPage.input.label.password")}</label>
               <div className="relative">
                 <input
                   id="password"
@@ -153,7 +134,7 @@ function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   type={showPassword ? "text" : "password"}
-                  placeholder={zhTWDictionary.loginPage.input.placeholder.password}
+                  placeholder={t("loginPage.input.placeholder.password")}
                   className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
                 <button
@@ -184,21 +165,18 @@ function LoginPage() {
                 </button>
               ))}
             </div>
-            {errorMessage && !forSchool && (
-              <p className="text-red-500 text-sm text-center">{errorMessage}</p>
-            )}
             <button
               type="submit"
               className={`w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition ${loading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               disabled={loading}
             >
-              {loading ? "登入中..." : "登入"}
+              {loading ? t("登入中...") : t("登入")}
             </button>
           </form>
           <div className="my-5 flex items-center gap-3 text-sm text-gray-400" aria-hidden="true">
             <div className="h-px flex-1 bg-gray-200" />
-            或
+            {t("或")}
             <div className="h-px flex-1 bg-gray-200" />
           </div>
           <button
@@ -206,13 +184,13 @@ function LoginPage() {
             onClick={handleLineLogin}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#06C755] py-2 font-semibold text-white transition hover:bg-[#05b94e] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#06C755] focus-visible:ring-offset-2"
           >
-            {isLineDemoMode ? "體驗 LINE 登入／註冊（展示）" : "使用 LINE 登入／註冊"}
+            {isLineDemoMode ? t("體驗 LINE 登入／註冊（展示）") : t("使用 LINE 登入／註冊")}
           </button>
-          {isLineDemoMode && <p className="mt-2 text-center text-xs text-gray-500">展示模式不會建立真實帳號或登入系統。</p>}
+          {isLineDemoMode && <p className="mt-2 text-center text-xs text-gray-500">{t("展示模式不會建立真實帳號或登入系統。")}</p>}
           <p className="text-center text-sm text-gray-500 mt-4">
-            還沒有帳號？{" "}
+            {t("還沒有帳號？")}{" "}
             <Link to="/register" onClick={(event) => switchPage(event, "/register")} className="text-blue-500 hover:underline">
-              註冊帳號
+              {t("註冊帳號")}
             </Link>
           </p>
 

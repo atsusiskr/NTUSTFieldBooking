@@ -1,12 +1,14 @@
+import { useTranslation } from "../locale/i18n";
 import './fieldPicker.css';
 import layouts from './outFieldLayout.json';
 
 function FieldPicker({ fieldName, onSelectField, selectedId }) {
+  const t = useTranslation();
     let layout = null;
     layout = layouts[fieldName];
 
     if (!layout) {
-        return <div className="field-diagram-error">找不到「{String(fieldName)}」的場地資料</div>;
+        return <div className="field-diagram-error">{t("找不到「")}{String(fieldName)}{t("」的場地資料")}</div>;
     }
 
     const vb = { w: 1000, h: 600 };
@@ -115,7 +117,7 @@ function FieldPicker({ fieldName, onSelectField, selectedId }) {
                                         fontSize={f.fontSize ?? 16}
                                         fill="#fff"
                                     >
-                                        {f.text}
+                                        {t(f.text)}
                                     </text>
                                 )}
                             </g>

@@ -1,3 +1,4 @@
+import { useTranslation, translate } from "../../locale/i18n";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../baseApi";
@@ -5,8 +6,8 @@ import { formatDateTime } from "../../utils/dateTimeFormat";
 import { describeRequestError } from "../../utils/requestError";
 
 function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate}) {
+  const t = useTranslation();
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState("byDate");
   const [selectedSlots, setSelectedSlots] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
@@ -62,21 +63,18 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
     return Number.isNaN(d.getTime()) ? null : d;
   };
 
-  const sevenDays = Array.from({ length: 7}, (_, i) => {
-    const d = new Date(baseDate);
-    d.setDate(baseDate.getDate() + i - 3);
-    return d;
-  });
-
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         setBookingsError(null);
         setBookingsLoading(true);
 
-        const start = new Date(sevenDays[0]);
+        const center = selectedDate ? new Date(selectedDate) : new Date();
+        const start = new Date(center);
+        start.setDate(center.getDate() - 3);
         start.setHours(0, 0, 0, 0);
-        const end = new Date(sevenDays[sevenDays.length - 1]);
+        const end = new Date(center);
+        end.setDate(center.getDate() + 3);
         end.setHours(23, 59, 59, 999);
 
         const res = await api.get("/bookings", {
@@ -184,7 +182,7 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
           <thead>
             <tr>
               <th className="sticky left-0 w-32 z-30 px-4 py-2 border whitespace-nowrap border-gray-300 bg-blue-100">
-                時段
+                {t("時段")}
               </th>
 
               {fields.map((field, idx) => {
@@ -200,7 +198,7 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
                     <div
                       className={`${isSelected ? "bg-blue-800" : "bg-blue-400"} text-white text-xl px-4 py-1 rounded-full transition-transform hover:scale-110 shadow-md inline-block`}
                     >
-                      {field.name}-{typeMap[field.resources[0].resource_type]}
+                      {field.name}-{t(typeMap[field.resources[0].resource_type])}
                     </div>
                   </th>
                 );
@@ -223,7 +221,6 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
                   {/* 每個場地一格 */}
                   {fields.map((field, colIdx) => {
                     const resources = Array.isArray(field.resources) ? field.resources : [];
-                    const count = resources.length;
 
                     return (
                       <td key={field.id ?? colIdx} className="px-3 py-3 border border-gray-300">
@@ -286,10 +283,10 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
       
       <div className="mx-2 md:mx-18">
         {bookingsLoading && (
-          <p className="text-center text-sm text-gray-500 mb-2">載入已預約時段中...</p>
+          <p className="text-center text-sm text-gray-500 mb-2">{t("載入已預約時段中...")}</p>
         )}
         {bookingsError && (
-          <p className="text-center text-sm text-red-600 mb-2">取得已預約時段失敗：{describeRequestError(bookingsError).message}</p>
+          <p className="text-center text-sm text-red-600 mb-2">{t("取得已預約時段失敗：")}{describeRequestError(bookingsError).message}</p>
         )}
         {tableByDate()}
       </div>
@@ -301,10 +298,10 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
             {(() => {
               const startHour = Math.min(...selectedSlots.hours);
               const endHour = Math.max(...selectedSlots.hours) + 1;
-              return `你已選擇：${formatDateTime(startHour, { input: "hour" }).time} - ${formatDateTime(endHour, { input: "hour" }).time}`;
+              return translate("你已選擇：{value0} - {value1}", { value0: formatDateTime(startHour, { input: "hour" }).time, value1: formatDateTime(endHour, { input: "hour" }).time });
             })()}
             <br />
-            {`場地：${fields[selectedSlots.fieldIdx].name} / 第 ${selectedSlots.resourceIdx + 1} 面`}
+            {translate("場地：{value0} / 第 {value1} 面", { value0: fields[selectedSlots.fieldIdx].name, value1: selectedSlots.resourceIdx + 1 })}
           </div>
 
           <div className="flex-1" />
@@ -316,7 +313,7 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
 
               navigate(`/ntust/pay`, {
                 state: {
-                  fieldName: fields[selectedSlots.fieldIdx].name + "-" + typeMap[fields[selectedSlots.fieldIdx].resources[0].resource_type],
+                  fieldName: fields[selectedSlots.fieldIdx].name + "-" + t(typeMap[fields[selectedSlots.fieldIdx].resources[0].resource_type]),
                   fieldKey: fields[selectedSlots.fieldIdx].resources[selectedSlots.resourceIdx].id,
                   resourceIdx: selectedSlots.resourceIdx,
                   date: formatDateTime(selectedDate).numericDate,
@@ -327,7 +324,7 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
             }}
             className="bg-green-500 text-white w-[150px] md:px-8 py-2.5 border-gray-300 rounded-lg shadow-xl hover:bg-green-600 transition font-semibold"
           >
-            完成預約
+            {t("完成預約")}
           </button>
         </div>
       )

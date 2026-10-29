@@ -1,3 +1,4 @@
+import { useTranslation, translate } from "../../locale/i18n";
 import { useState, useEffect, useRef } from "react";
 
 import Navbar from "../components/navbar";
@@ -10,13 +11,12 @@ import PickUpDetailPopUp from "../components/pickUp/pickUpDetailPopUp";
 import SkillLevelPrompt from "../components/pickUp/SkillLevelPrompt";
 import JoinGroupDialog from "../components/pickUp/JoinGroupDialog";
 import CreatePickUpDialog from "../components/pickUp/CreatePickUpDialog";
-import { isGroupExpired, isRegistrationClosed } from "../pickUpTiming";
-import { describePickUpJoinError } from "../pickUpJoinError";
-import { getUpcomingConfirmedOrders } from "../orderDisplay";
+import { isGroupExpired, isRegistrationClosed } from "../utils/pickUpTiming";
+import { describePickUpJoinError } from "../utils/pickUpJoinError";
+import { getUpcomingConfirmedOrders } from "../utils/orderDisplay";
 
 import { facilityMap, functionIconMap, InfoIconMap, sportIconMap } from "../../constant/IconMap";
-import { statusMap } from "../../constant/statusMap";
-import { zhTWDictionary } from "../../locale/zh-TW/translate";
+import { statusMap, getStatusLabel } from "../../constant/statusMap";
 import { createPickUpLoadContext, pickUpService } from "../../service/pickUpService";
 import { skillLevelService } from "../../service/skillLevelService";
 import { useSportStore } from "../../store/sportStore";
@@ -28,13 +28,15 @@ const PAGE_SIZES = [10, 20, 50];
 
 
 export default function PickUpPage() {
+    const t = useTranslation();
     const sportTypeId = useSportStore((state) => state.sportId);
-    if (!sportTypeId) return <div className="app-page text-slate-900"><Navbar /><Loading isLoading text="載入球類資料中..." /></div>;
+    if (!sportTypeId) return <div className="app-page text-slate-900"><Navbar /><Loading isLoading text={t("載入球類資料中...")} /></div>;
     // 切換球類時重設頁碼、程度篩選與報名狀態，舊請求由各 effect 清理。
     return <PickUpPageContent key={sportTypeId} sportTypeId={sportTypeId} />;
 }
 
 function PickUpPageContent({ sportTypeId }) {
+  const t = useTranslation();
     const [groups, setGroups] = useState([]);
     const [myPickUpOrders, setMyPickUpOrders] = useState([]);
     const [myOrdersError, setMyOrdersError] = useState(false);
@@ -88,9 +90,9 @@ function PickUpPageContent({ sportTypeId }) {
         if (selectedGroup && isGroupExpired(selectedGroup, now)) setSelectedGroup(null);
         if (joinDialogGroup && (isRegistrationClosed(joinDialogGroup, now) || isGroupExpired(joinDialogGroup, now))) {
             setJoinDialogGroup(null);
-            errorPopup("活動報名已截止", "這個臨打團已超過報名截止時間，無法再報名。");
+            errorPopup(t("活動報名已截止"), t("這個臨打團已超過報名截止時間，無法再報名。"));
         }
-    }, [now, selectedGroup, joinDialogGroup]);
+    }, [now, selectedGroup, joinDialogGroup, t]);
 
     useEffect(() => {
         let cancelled = false;
@@ -233,7 +235,7 @@ function PickUpPageContent({ sportTypeId }) {
         if (joinInFlight.current) return false;
         const group = groups.find((item) => item.id === groupId) || joinDialogGroup || selectedGroup;
         if (group && (isRegistrationClosed(group) || isGroupExpired(group))) {
-            errorPopup("活動報名已截止", "這個臨打團已超過報名截止時間，無法再報名。");
+            errorPopup(t("活動報名已截止"), t("這個臨打團已超過報名截止時間，無法再報名。"));
             setJoinDialogGroup(null);
             setNow(Date.now());
             return false;
@@ -266,7 +268,7 @@ function PickUpPageContent({ sportTypeId }) {
                     ? { ...member, skill_level: myLevel } : member),
             } : undefined;
             if (group && (isRegistrationClosed(group) || isGroupExpired(group))) {
-                errorPopup("活動報名已截止", "這個臨打團已超過報名截止時間，無法再報名。");
+                errorPopup(t("活動報名已截止"), t("這個臨打團已超過報名截止時間，無法再報名。"));
                 setJoinDialogGroup(null);
                 setNow(Date.now());
                 return false;
@@ -289,8 +291,8 @@ function PickUpPageContent({ sportTypeId }) {
             );
 
             successPopup("", payload
-                ? `已送出 ${payload.party_size} 人的團體報名，請等待主揪確認。`
-                : zhTWDictionary.pickUpPage.successMessage.registrationSuccess);
+                ? translate("已送出 {value0} 人的團體報名，請等待主揪確認。", { value0: payload.party_size })
+                : t("pickUpPage.successMessage.registrationSuccess"));
             return true;
         } catch (error) {
             const failure = describePickUpJoinError(error);
@@ -317,7 +319,7 @@ function PickUpPageContent({ sportTypeId }) {
         event.preventDefault();
         const level = Number(selectedMyLevel);
         if (!levels.some((item) => item.level === level)) {
-            setMyLevelSaveError("請先選擇有效的程度。");
+            setMyLevelSaveError(t("請先選擇有效的程度。"));
             return;
         }
 
@@ -336,7 +338,7 @@ function PickUpPageContent({ sportTypeId }) {
                     setIsDetailModalClosing(false);
                 }
             } else {
-                successPopup("設定成功", "你的運動程度已儲存。");
+                successPopup(t("設定成功"), t("你的運動程度已儲存。"));
             }
         } catch (error) {
             setMyLevelSaveError(describeRequestError(error).message);
@@ -353,7 +355,7 @@ function PickUpPageContent({ sportTypeId }) {
 
     const requestJoin = (group) => {
         if (isRegistrationClosed(group) || isGroupExpired(group)) {
-            errorPopup("活動報名已截止", "這個臨打團已超過報名截止時間，無法再報名。");
+            errorPopup(t("活動報名已截止"), t("這個臨打團已超過報名截止時間，無法再報名。"));
             setNow(Date.now());
             return;
         }
@@ -399,10 +401,10 @@ function PickUpPageContent({ sportTypeId }) {
         <div className="app-page text-slate-900">
             <Navbar />
             <header className="relative mx-auto my-8 w-[95%] max-w-7xl">
-                <h1 className="px-12 text-center text-3xl font-bold">{zhTWDictionary.pickUpPage.title}</h1>
+                <h1 className="px-12 text-center text-3xl font-bold">{t("pickUpPage.title")}</h1>
                 <button
                     type="button"
-                    aria-label="篩選球團"
+                    aria-label={t("篩選球團")}
                     aria-expanded={isMobileFilterOpen}
                     aria-controls="mobile-pickup-filters"
                     onClick={() => setIsMobileFilterOpen((isOpen) => !isOpen)}
@@ -411,28 +413,28 @@ function PickUpPageContent({ sportTypeId }) {
                     {functionIconMap.filter.icon}
                 </button>
             </header>
-            <Loading isLoading={loading || levelsLoading} text={zhTWDictionary.pickUpPage.loadingMessage} />
+            <Loading isLoading={loading || levelsLoading} text={t("pickUpPage.loadingMessage")} />
 
-            {upcomingOrders.length > 0 && <section role="status" aria-label="即將開始的已報名活動" className="mx-auto mb-6 w-[95%] max-w-7xl rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950 shadow-sm sm:p-5">
-                <h2 className="text-lg font-bold">提醒：你報名的臨打團將在兩天內開始</h2>
+            {upcomingOrders.length > 0 && <section role="status" aria-label={t("即將開始的已報名活動")} className="mx-auto mb-6 w-[95%] max-w-7xl rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950 shadow-sm sm:p-5">
+                <h2 className="text-lg font-bold">{t("提醒：你報名的臨打團將在兩天內開始")}</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                     {upcomingOrders.map((order) => <article key={order.id} className="rounded-xl border border-amber-200 bg-white p-4">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <h3 className="font-bold text-slate-900">{order.title}</h3>
-                            <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-800">已報名</span>
+                            <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-800">{t("已報名")}</span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-700">{formatDateTime(order.start_time).date}・{formatDateTime(order.start_time).time} 至 {formatDateTime(order.end_time).time}</p>
-                        <p className="mt-1 text-sm text-slate-600">地點：{order.location?.name || "未指定"}</p>
-                        {order.pickupGroup && <button type="button" onClick={() => openDetailModal(order.pickupGroup)} className="mt-3 min-h-10 rounded-lg border border-amber-300 px-3 text-sm font-semibold text-amber-900 hover:bg-amber-100">查看活動資訊</button>}
+                        <p className="mt-2 text-sm text-slate-700">{formatDateTime(order.start_time).date}・{formatDateTime(order.start_time).time} {t("至")} {formatDateTime(order.end_time).time}</p>
+                        <p className="mt-1 text-sm text-slate-600">{t("地點：")}{order.location?.name || t("未指定")}</p>
+                        {order.pickupGroup && <button type="button" onClick={() => openDetailModal(order.pickupGroup)} className="mt-3 min-h-10 rounded-lg border border-amber-300 px-3 text-sm font-semibold text-amber-900 hover:bg-amber-100">{t("查看活動資訊")}</button>}
                     </article>)}
                 </div>
             </section>}
-            {myOrdersError && <p role="alert" className="mx-auto mb-4 w-[95%] max-w-7xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">近期已報名活動載入失敗：{myOrdersError}<button type="button" onClick={() => setRefreshTrigger((value) => value + 1)} className="ml-2 font-semibold underline">重新載入</button></p>}
+            {myOrdersError && <p role="alert" className="mx-auto mb-4 w-[95%] max-w-7xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{t("近期已報名活動載入失敗：")}{myOrdersError}<button type="button" onClick={() => setRefreshTrigger((value) => value + 1)} className="ml-2 font-semibold underline">{t("重新載入")}</button></p>}
 
             {myLevelStatus === "missing" && levelDialogDismissed && (
                 <div className="mx-auto mb-4 flex w-[95%] max-w-7xl items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900" role="status">
-                    <span>你還沒有設定這個球類的程度。</span>
-                    <button type="button" onClick={() => setLevelDialogDismissed(false)} className="shrink-0 font-bold text-blue-700 underline">設定程度</button>
+                    <span>{t("你還沒有設定這個球類的程度。")}</span>
+                    <button type="button" onClick={() => setLevelDialogDismissed(false)} className="shrink-0 font-bold text-blue-700 underline">{t("設定程度")}</button>
                 </div>
             )}
             {myLevelStatus === "missing" && !levelDialogDismissed && !loading && !levelsLoading && (
@@ -471,7 +473,7 @@ function PickUpPageContent({ sportTypeId }) {
                     {/* {顯示臨打團清單} */}
                     {!loading && visibleGroups.length === 0 && (
                         <p className="text-center text-gray-500">
-                            {selectedDate ? "此頁沒有符合所選日期的臨打團，請切換頁面查看。" : zhTWDictionary.pickUpPage.groupEmpty}
+                            {selectedDate ? t("此頁沒有符合所選日期的臨打團，請切換頁面查看。") : t("pickUpPage.groupEmpty")}
                         </p>
                     )}
                     <div>
@@ -492,13 +494,13 @@ function PickUpPageContent({ sportTypeId }) {
                                                     {sportIconMap[group.sport?.code]?.icon}
                                                     {group.sport?.name || "-"}
                                                 </p>
-                                                {registrationClosed && <span className="shrink-0 rounded-md bg-red-100 px-2 py-1 text-sm font-semibold text-red-700">報名已截止</span>}
+                                                {registrationClosed && <span className="shrink-0 rounded-md bg-red-100 px-2 py-1 text-sm font-semibold text-red-700">{t("報名已截止")}</span>}
                                             </div>
-                                            <p className="break-words text-sm font-semibold text-gray-400">{zhTWDictionary.pickUpPage.label.hostName} {group.host?.display_name || "-"}</p>
+                                            <p className="break-words text-sm font-semibold text-gray-400">{t("pickUpPage.label.hostName")} {group.host?.display_name || "-"}</p>
                                         </div>
 
                                         <div className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-sm font-semibold ${isFull ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}`}>
-                                            {group.current_enrolled || 0}/{group.capacity || 0} 人
+                                            {group.current_enrolled || 0}/{group.capacity || 0} {t("人")}
                                         </div>
                                     </div>
 
@@ -508,7 +510,7 @@ function PickUpPageContent({ sportTypeId }) {
                                         <div className="flex min-h-20 items-center gap-3 rounded-xl bg-gray-50 px-3 py-3 text-gray-700">
                                             <span className="shrink-0 text-blue-600">{InfoIconMap.time?.icon}</span>
                                             <div>
-                                                <p className="text-xs font-medium text-gray-500">{zhTWDictionary.pickUpPage.label.time}</p>
+                                                <p className="text-xs font-medium text-gray-500">{t("pickUpPage.label.time")}</p>
                                                 <p className="mt-1 font-semibold text-gray-800">
                                                     {formatDateTime(group.start_time).date}・{formatDateTime(group.start_time).time}
                                                 </p>
@@ -517,7 +519,7 @@ function PickUpPageContent({ sportTypeId }) {
                                         <div className="flex min-h-20 items-center gap-3 rounded-xl bg-gray-50 px-3 py-3 text-gray-700">
                                             <span className="shrink-0 text-blue-600">{InfoIconMap.location?.icon}</span>
                                             <div className="min-w-0">
-                                                <p className="text-xs font-medium text-gray-500">{zhTWDictionary.pickUpPage.label.location}</p>
+                                                <p className="text-xs font-medium text-gray-500">{t("pickUpPage.label.location")}</p>
                                                 <p className="mt-1 truncate font-semibold text-gray-800">{group.location?.name || "-"}</p>
                                             </div>
                                         </div>
@@ -525,7 +527,7 @@ function PickUpPageContent({ sportTypeId }) {
 
                                     {/* 展示設施*/}
                                     <div className="mb-5">
-                                        <p className="text-sm font-medium text-gray-700 mb-2">{zhTWDictionary.pickUpPage.label.facilities}:</p>
+                                        <p className="text-sm font-medium text-gray-700 mb-2">{t("pickUpPage.label.facilities")}:</p>
 
                                         <div className="w-fit flex flex-wrap gap-2 p-1 border border-gray-200 rounded-md bg-white relative ">
 
@@ -537,7 +539,7 @@ function PickUpPageContent({ sportTypeId }) {
                                                         className="flex items-center gap-1.5 bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm border border-gray-200"
                                                     >
                                                         <span className="opacity-60">{facility?.icon}</span>
-                                                        <span className="font-medium">{facility?.name}</span>
+                                                        <span className="font-medium">{facility && t(facility.name)}</span>
                                                     </span>
                                                 )
                                             })}
@@ -548,7 +550,7 @@ function PickUpPageContent({ sportTypeId }) {
                                     {/*費用程度標籤與報名按鈕 */}
                                     <div className="flex flex-col sm:flex-row justify-between items-center mt-4 pt-4 border-t border-gray-100 gap-4">
                                         <div className="flex items-center justify-between gap-2 w-full sm:w-auto">
-                                            <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-base font-medium">{zhTWDictionary.pickUpPage.label.level}: {group.min_skill_level.label || zhTWDictionary.pickUpPage.label.levelNull} {(Number(group.max_skill_level?.level) === Number(group.min_skill_level.level) || !group.max_skill_level?.label) ? "" : "- " + group.max_skill_level?.label}</span>
+                                            <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-base font-medium">{t("pickUpPage.label.level")}: {group.min_skill_level.label || t("pickUpPage.label.levelNull")} {(Number(group.max_skill_level?.level) === Number(group.min_skill_level.level) || !group.max_skill_level?.label) ? "" : "- " + group.max_skill_level?.label}</span>
                                             <span className={`px-3 py-1 my-[auto] rounded-md text-base font-bold border ${(group.fee !== 0) ? 'text-green-700 bg-green-50 border-green-200' : 'text-gray-700'}`} >$ {group.fee}</span>
 
                                         </div>
@@ -560,7 +562,7 @@ function PickUpPageContent({ sportTypeId }) {
                                                 onClick={() => openDetailModal(group)}
                                                 className="min-h-11 w-2/5 rounded-lg border border-blue-300 px-4 py-2 font-semibold text-blue-600 transition hover:bg-blue-50 sm:w-auto"
                                             >
-                                                顯示詳細
+                                                {t("顯示詳細")}
                                             </button>
 
                                             {/* 報名按鈕 */}
@@ -572,12 +574,12 @@ function PickUpPageContent({ sportTypeId }) {
                                                     ${registrationClosed && status === null && !isFull ? "bg-gray-500" : isFull && status === null ? statusMap.full.class : (statusMap[status]?.class || statusMap.default.class)}`}
                                             >
                                                 {status !== null
-                                                    ? (statusMap[status]?.label || statusMap.default.label)
+                                                    ? getStatusLabel(status, t)
                                                     : registrationClosed && !isFull
-                                                        ? "報名已截止"
+                                                        ? t("報名已截止")
                                                     : isFull
-                                                        ? statusMap.full.label
-                                                        : statusMap.default.label}
+                                                        ? getStatusLabel("full", t)
+                                                        : getStatusLabel("default", t)}
                                             </button>
                                         </div>
                                     </div>
@@ -586,26 +588,26 @@ function PickUpPageContent({ sportTypeId }) {
                         })}
                     </div>
                     {!loading && (
-                        <nav aria-label="臨打團分頁" className="mt-6 mb-22 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+                        <nav aria-label={t("臨打團分頁")} className="mt-6 mb-22 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
                             <div className="flex items-center gap-2">
-                                <label htmlFor="pickup-page-size" className="font-medium">每頁顯示</label>
+                                <label htmlFor="pickup-page-size" className="font-medium">{t("每頁顯示")}</label>
                                 <select
                                     id="pickup-page-size"
                                     value={pageSize}
                                     onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}
                                     className="rounded-lg border border-gray-300 bg-white px-2 py-2 text-gray-800"
                                 >
-                                    {PAGE_SIZES.map((size) => <option key={size} value={size}>{size} 筆</option>)}
+                                    {PAGE_SIZES.map((size) => <option key={size} value={size}>{size} {t("筆")}</option>)}
                                 </select>
                             </div>
                             {showPageControls && (
                                 <div className="flex items-center gap-2">
                                     <span className="whitespace-nowrap text-gray-500">
-                                        第 {page}{pageCount === null ? "" : ` / ${pageCount}`} 頁
-                                        {pageInfo.total === null ? "" : ` · 共 ${pageInfo.total} 筆`}
+                                        {t("第")} {page}{pageCount === null ? "" : ` / ${pageCount}`} {t("頁")}
+                                        {pageInfo.total === null ? "" : translate(" · 共 {value0} 筆", { value0: pageInfo.total })}
                                     </span>
-                                    <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page <= 1} className="min-h-10 rounded-lg border border-gray-300 px-3 font-semibold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40">上一頁</button>
-                                    <button type="button" onClick={() => setPage((current) => current + 1)} disabled={!pageInfo.hasNext} className="min-h-10 rounded-lg border border-gray-300 px-3 font-semibold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40">下一頁</button>
+                                    <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page <= 1} className="min-h-10 rounded-lg border border-gray-300 px-3 font-semibold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40">{t("上一頁")}</button>
+                                    <button type="button" onClick={() => setPage((current) => current + 1)} disabled={!pageInfo.hasNext} className="min-h-10 rounded-lg border border-gray-300 px-3 font-semibold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40">{t("下一頁")}</button>
                                 </div>
                             )}
                         </nav>
@@ -649,7 +651,7 @@ function PickUpPageContent({ sportTypeId }) {
                     className="fixed bottom-4 right-4 z-50 flex items-center justify-center gap-2 bg-gray-700 text-white px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
                 >
                     <div>{functionIconMap.refresh.icon}</div>
-                    <span className="font-bold tracking-wider">{zhTWDictionary.pickUpPage.button.refresh}</span>
+                    <span className="font-bold tracking-wider">{t("pickUpPage.button.refresh")}</span>
                 </button>
 
                 {/* 開團入口 */}
@@ -659,7 +661,7 @@ function PickUpPageContent({ sportTypeId }) {
                     className="fixed bottom-4 left-4 z-50 flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
                 >
                     {functionIconMap.add.icon}
-                    <span className="font-bold tracking-wider">{zhTWDictionary.pickUpPage.button.hostApply}</span>
+                    <span className="font-bold tracking-wider">{t("pickUpPage.button.hostApply")}</span>
                 </button>
 
                 {showCreateDialog && <CreatePickUpDialog
@@ -673,7 +675,7 @@ function PickUpPageContent({ sportTypeId }) {
                         setShowCreateDialog(false);
                         setPage(1);
                         setRefreshTrigger((value) => value + 1);
-                        successPopup("建立成功", "臨打團已建立；列表會依目前的篩選條件顯示。");
+                        successPopup(t("建立成功"), t("臨打團已建立；列表會依目前的篩選條件顯示。"));
                     }}
                 />}
             </div>

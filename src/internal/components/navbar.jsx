@@ -1,17 +1,32 @@
+import { useTranslation } from "../../locale/i18n";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { IoPersonCircle } from "react-icons/io5";
+import { Link } from "react-router-dom";
+import { logoutService } from "../../service/authService";
+import { errorPopup } from "../../components/pop-up";
+import { describeRequestError } from "../../utils/requestError";
 import './navbar.css';
 
 function Navbar() {
+  const t = useTranslation();
+  const handleLogout = async (event) => {
+    event.preventDefault();
+    try {
+      await logoutService();
+      window.location.assign("/");
+    } catch (error) {
+      const failure = describeRequestError(error);
+      errorPopup(failure.title, failure.message);
+    }
+  };
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <h2>NTUST 場地預約系統</h2>
+        <h2>{t("NTUST 場地預約系統")}</h2>
       </div>
       <ul className="navbar-center">
-        <li><a href={`/ntust/home/`}>場地</a></li>
-        <li><a href="#">公告</a></li>
-        <li><a href={`/ntust/order`}>我的預約</a></li>
+        <li><Link to="/ntust/home/">{t("場地")}</Link></li>
+        <li><Link to="/ntust/order">{t("我的預約")}</Link></li>
       </ul>
       <div className="navbar-right dropdown">
         <div className="icon-container">
@@ -19,12 +34,9 @@ function Navbar() {
           <IoPersonCircle className="person-icon" />
         </div>
         <div className="dropdown-content">
-          <a href={`/ntust/home/`}>場地</a>
-          <a href="#">公告</a>
-          <a href={`/ntust/order`}>我的預約</a>
-          <a href="#">個人資料</a>
-          <a href="#">設定</a>
-          <a href="/">登出</a>
+          <Link to="/ntust/home/">{t("場地")}</Link>
+          <Link to="/ntust/order">{t("我的預約")}</Link>
+          <a href="/" onClick={handleLogout}>{t("登出")}</a>
         </div>
       </div>
     </nav>
