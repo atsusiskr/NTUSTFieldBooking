@@ -1,6 +1,6 @@
 import { useTranslation } from "../locale/i18n";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import liff from "@line/liff";
 import Loading from "../components/loading";
 import { loginWithLineService } from "../service/authService";
@@ -8,8 +8,9 @@ import { consumeLineTransaction, getLineRedirectUri, startLineAuthorization } fr
 import { describeRequestError } from "../utils/requestError";
 import { useSportStore } from "../store/sportStore";
 import { getUserProfile } from "../service/userService";
+import LineProfilePage from "./lineProfilePage";
 
-function LineLoginPage() {
+export function LineAuthorizationPage() {
   const t = useTranslation();
   const navigate = useNavigate();
   const started = useRef(false);
@@ -58,10 +59,11 @@ function LineLoginPage() {
           const profile = await getUserProfile();
           needsProfile = !profile?.gender || !profile?.birth_date;
         } catch {
-          // Login succeeded; a profile lookup failure should not block returning users.
+          // Verify profile completion on the form page before entering the app.
+          needsProfile = true;
         }
       }
-      navigate(needsProfile ? "/external/user" : "/external/group", {
+      navigate(needsProfile ? "/line-login" : "/external/group", {
         replace: true,
         state: needsProfile ? { completeLineProfile: true } : null,
       });
@@ -102,6 +104,13 @@ function LineLoginPage() {
       </div>
     </main>
   );
+}
+
+function LineLoginPage() {
+  const location = useLocation();
+  return location.state?.completeLineProfile === true
+    ? <LineProfilePage />
+    : <LineAuthorizationPage />;
 }
 
 export default LineLoginPage;

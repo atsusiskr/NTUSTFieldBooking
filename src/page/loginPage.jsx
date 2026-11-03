@@ -19,7 +19,8 @@ function LoginPage() {
   const [filter, setFilter] = useState("");
   const [password, setPassword] = useState("");
   const [sport, setSport] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingSports, setLoadingSports] = useState(true);
+  const [loggingIn, setLoggingIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
@@ -27,7 +28,6 @@ function LoginPage() {
   const { isLeaving, switchPage } = useAuthPageTransition();
 
   useEffect(() => {
-    setLoading(true);
     const getSportList = async () => {
       try {
         const data = await sportService.getSportList();
@@ -37,24 +37,19 @@ function LoginPage() {
         const failure = describeRequestError(error);
         errorPopup(failure.title, failure.message);
       } finally {
-        setLoading(false);
+        setLoadingSports(false);
       }
     }
 
     getSportList();
   }, []);
 
+  const getLoginSportId = () => filter || sport[Math.floor(Math.random() * sport.length)]?.id || "badminton";
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    if (loading) return;
-
-    if (!filter) {
-      errorPopup(t("loginPage.errorMessage.error"), t("loginPage.errorMessage.requiredSportsType"));
-      return;
-    }
-
-    setLoading(true);
+    if (loadingSports || loggingIn) return;
 
     try {
       const form = new FormData(e.target);
@@ -63,12 +58,12 @@ function LoginPage() {
 
       if (!email || !password) {
         errorPopup(t("loginPage.errorMessage.error"), t("loginPage.errorMessage.invalidCredentials"));
-        setLoading(false);
         return;
       }
 
+      setLoggingIn(true);
       await loginService(email, password);
-      setSportId(filter);
+      setSportId(getLoginSportId());
       navigate(`external/group`);
 
     } catch (error) {
@@ -81,7 +76,7 @@ function LoginPage() {
       errorPopup(failure.title, failure.message);
       console.error("Login error:", error);
     } finally {
-      setLoading(false);
+      setLoggingIn(false);
     }
   };
 
@@ -91,7 +86,7 @@ function LoginPage() {
       return;
     }
     try {
-      setSportId(filter || sport[0]?.id || "badminton");
+      setSportId(getLoginSportId());
       await startLineAuthorization();
     } catch (error) {
       errorPopup(t("LINE 登入失敗"), error.message);
@@ -100,7 +95,7 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-100 to-blue-300">
-      <Loading isLoading={loading} text={t("loginPage.loadingMessage")} />
+      <Loading isLoading={loadingSports || loggingIn} text={loggingIn ? t("登入中...") : t("載入中…")} />
       <div className="w-[80%] max-w-md" style={{ perspective: "1200px" }}>
         <div className={`auth-card ${isLeaving ? "auth-card-leaving" : ""} relative bg-white shadow-lg rounded-xl p-8 w-full max-w-md transition-transform duration-500 ease-in-out`}>
           <div className="flex flex-col items-center mb-4">
@@ -167,11 +162,11 @@ function LoginPage() {
             </div>
             <button
               type="submit"
-              className={`w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition ${loading ? "opacity-50 cursor-not-allowed" : ""
+              className={`w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition ${loadingSports || loggingIn ? "opacity-50 cursor-not-allowed" : ""
                 }`}
-              disabled={loading}
+              disabled={loadingSports || loggingIn}
             >
-              {loading ? t("登入中...") : t("登入")}
+              {loggingIn ? t("登入中...") : t("登入")}
             </button>
           </form>
           <div className="my-5 flex items-center gap-3 text-sm text-gray-400" aria-hidden="true">

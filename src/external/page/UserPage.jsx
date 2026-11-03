@@ -1,10 +1,12 @@
 import { useTranslation, translate } from "../../locale/i18n";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 import Navbar from "../components/navbar";
 import { Award, CalendarDays, Mail, Phone, UserRound, UsersRound } from "lucide-react";
-import { getUserProfile, updateUserProfile } from "../../service/userService";
+import { getUserProfile, setInitialPassword, unlinkLineIdentity, updateUserProfile } from "../../service/userService";
+import SetPasswordForm from "../components/SetPasswordForm";
 import { InfoIconMap } from "../../constant/IconMap";
 import Loading from "../../components/loading";
 import { errorPopup, successPopup } from "../../components/pop-up";
@@ -52,6 +54,35 @@ const calculateAge = (birthDate) => {
     return hasNotHadBirthday ? age - 1 : age;
 };
 
+function SetPasswordDialog({ existingEmail, onSubmit, onCancel }) {
+    const t = useTranslation();
+    const dialogRef = useRef(null);
+
+    useEffect(() => {
+        const dialog = dialogRef.current;
+        dialog.showModal();
+        return () => { if (dialog.open) dialog.close(); };
+    }, []);
+
+    return (
+        <dialog
+            ref={dialogRef}
+            onCancel={(event) => { event.preventDefault(); onCancel(); }}
+            aria-labelledby="set-password-title"
+            className="line-password-dialog w-[calc(100%-2rem)] max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl backdrop:bg-slate-950/50"
+        >
+            <h2 id="set-password-title" className="text-xl font-bold text-slate-900">{t("先設定登入密碼")}</h2>
+            <p className="mb-5 mt-2 text-sm text-slate-600">{t("LINE 是目前唯一的登入方式。設定信箱與密碼後，才可以解除綁定。")}</p>
+            <SetPasswordForm
+                existingEmail={existingEmail}
+                onSubmit={onSubmit}
+                onCancel={onCancel}
+                submitLabel={t("設定密碼並解除 LINE 綁定")}
+            />
+        </dialog>
+    );
+}
+
 export function UserPage() {
   const t = useTranslation();
     const location = useLocation();
@@ -60,6 +91,11 @@ export function UserPage() {
     const [user, setUser] = useState(null);
     const [isEditing, setIsEditing] = useState(completingLineProfile);
     const [isSaving, setIsSaving] = useState(false);
+    const [isUnlinkingLine, setIsUnlinkingLine] = useState(false);
+    const [lineUnlinked, setLineUnlinked] = useState(false);
+    const [passwordConfigured, setPasswordConfigured] = useState(false);
+    const [showPasswordForm, setShowPasswordForm] = useState(false);
+    const [showPasswordDialog, setShowPasswordDialog] = useState(false);
     const [myLevel, setMyLevel] = useState(null);
     const [selectedLevel, setSelectedLevel] = useState("");
     const [levelOptions, setLevelOptions] = useState([]);
@@ -143,6 +179,58 @@ export function UserPage() {
         setFormData(createEditableProfile(user));
         setSelectedLevel(myLevel === null ? "" : String(myLevel));
         setIsEditing(false);
+    };
+
+    const performUnlinkLine = async (offerPasswordSetup) => {
+        setIsUnlinkingLine(true);
+        try {
+            await unlinkLineIdentity();
+            setLineUnlinked(true);
+            successPopup(t("解除綁定成功"), t("LINE 帳號已與目前帳號解除綁定。"));
+        } catch (error) {
+            if (error?.response?.status === 409 && offerPasswordSetup) {
+                setShowPasswordDialog(true);
+                return;
+            }
+            if (error?.response?.status === 404) {
+                setLineUnlinked(true);
+            }
+            const failure = describeRequestError(error, {
+                404: { title: t("LINE 尚未綁定"), message: t("目前帳號沒有綁定 LINE，無需解除。") },
+                409: { title: t("無法解除 LINE 綁定"), message: t("密碼已設定，但 LINE 仍無法解除。請重新整理後再試。") },
+            });
+            errorPopup(failure.title, failure.message);
+        } finally {
+            setIsUnlinkingLine(false);
+        }
+    };
+
+    const handleUnlinkLine = async () => {
+        if (isUnlinkingLine || lineUnlinked) return;
+        const confirmation = await Swal.fire({
+            icon: "warning",
+            title: t("解除 LINE 綁定？"),
+            text: t("解除後，這個 LINE 帳號將無法再登入目前帳號。請先確認已有其他登入方式。"),
+            showCancelButton: true,
+            confirmButtonText: t("確認解除綁定"),
+            cancelButtonText: t("取消"),
+            confirmButtonColor: "#dc2626",
+            focusCancel: true,
+        });
+        if (confirmation.isConfirmed) await performUnlinkLine(true);
+    };
+
+    const handleSetPassword = async ({ email, password }) => {
+        await setInitialPassword({ email, password });
+        setPasswordConfigured(true);
+        if (email) setUser((current) => ({ ...current, email }));
+        setShowPasswordForm(false);
+        if (showPasswordDialog) {
+            setShowPasswordDialog(false);
+            await performUnlinkLine(false);
+        } else {
+            successPopup(t("密碼設定成功"), t("現在可以使用信箱與密碼登入。"));
+        }
     };
 
     const handleSaveProfile = async (event) => {
@@ -346,7 +434,7 @@ export function UserPage() {
                                 )}
                                 {levelStatus === "no-sport" && <p className="text-sm text-slate-500">{t("尚未選擇球類，請先選擇球類再設定程度。")}</p>}
                                 {!levelOptionsError && levelStatus !== "loading" && levelOptions.length === 0 && sportId && <p className="text-sm text-slate-500">{t("目前沒有可選的程度。")}</p>}
-                                <p className="text-sm text-slate-500">{t("Email、username、頭像與組織資料無法透過目前 API 修改。")}</p>
+                                <p className="text-sm text-slate-500">{t("登入信箱可在首次設定密碼時補上；username、頭像與組織資料無法在此修改。")}</p>
                                 <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
                                     {!completingLineProfile && <button type="button" onClick={handleCancelEdit} disabled={isSaving} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">{t("取消")}</button>}
                                     <button type="submit" disabled={isSaving} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? t("儲存中...") : t(completingLineProfile ? "完成帳號設定" : "儲存變更")}</button>
@@ -397,6 +485,57 @@ export function UserPage() {
                     </section>
                 </div>
 
+                <section className="mt-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                            <h3 className="font-bold text-slate-900">{t("登入信箱與密碼")}</h3>
+                            <p className="mt-1 text-sm text-slate-600">
+                                {t(passwordConfigured || user.has_password === true
+                                    ? "此帳號已設定密碼，可以使用信箱與密碼登入。"
+                                    : "尚未設定密碼時，可在此補上登入信箱與密碼。每個帳號只能設定一次。")}
+                            </p>
+                        </div>
+                        {!(passwordConfigured || user.has_password === true || showPasswordForm) && (
+                            <button type="button" onClick={() => setShowPasswordForm(true)} className="shrink-0 rounded-lg border border-blue-300 px-4 py-2 text-sm font-bold text-blue-700 transition hover:bg-blue-50">
+                                {t("設定登入信箱與密碼")}
+                            </button>
+                        )}
+                    </div>
+                    {!(passwordConfigured || user.has_password === true) && showPasswordForm && (
+                        <div className="mt-4 max-w-md">
+                            <SetPasswordForm
+                                existingEmail={user.email}
+                                onSubmit={handleSetPassword}
+                                onCancel={() => setShowPasswordForm(false)}
+                                submitLabel={t("儲存登入密碼")}
+                            />
+                        </div>
+                    )}
+                </section>
+
+                <section className="mt-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <h3 className="font-bold text-slate-900">{t("LINE 帳號綁定")}</h3>
+                            <p className="mt-1 text-sm text-slate-600">
+                                {t(lineUnlinked
+                                    ? "目前帳號未綁定 LINE。"
+                                    : "解除後將無法再用這個 LINE 帳號登入目前帳號。")}
+                            </p>
+                        </div>
+                        {!lineUnlinked && (
+                            <button
+                                type="button"
+                                onClick={handleUnlinkLine}
+                                disabled={isUnlinkingLine}
+                                className="rounded-lg border border-red-300 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {t(isUnlinkingLine ? "解除綁定中..." : "解除 LINE 綁定")}
+                            </button>
+                        )}
+                    </div>
+                </section>
+
                 {user.organizations?.length > 0 && (
                     <section className="mt-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                         <div className="mb-5 flex items-center gap-3">
@@ -421,6 +560,13 @@ export function UserPage() {
                     </section>
                 )}
             </main>
+            {showPasswordDialog && (
+                <SetPasswordDialog
+                    existingEmail={user.email}
+                    onSubmit={handleSetPassword}
+                    onCancel={() => setShowPasswordDialog(false)}
+                />
+            )}
         </div>
     );
 }

@@ -15,6 +15,14 @@
   display: flow-root;
 }
 
+.line-password-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+}
+
 @keyframes pickup-modal-backdrop-in {
   from { opacity: 0; }
   to { opacity: 1; }

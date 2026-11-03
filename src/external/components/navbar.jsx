@@ -11,6 +11,7 @@ import { notificationService } from "../../service/notificationService";
 import { sportService } from "../../service/sportService";
 import { useSportStore } from "../../store/sportStore";
 import { findVenueSport } from "../utils/venueSportFilter";
+import SportSwitcher from "./SportSwitcher";
 import './navbar.css';
 
 function Navbar() {
@@ -49,25 +50,13 @@ function Navbar() {
     }
   }, [fieldType, navigate, selectedSport, setSportId, sportId]);
 
-  const handleSportChange = (event) => {
-    const sport = findVenueSport(sports, event.target.value);
-    if (!sport) return;
+  const handleSportChange = (sport) => {
     setSportId(sport.id);
     setIsMenuOpen(false);
     if (fieldType || locationId || location.pathname === "/external/pay") {
       navigate(`/external/home/${sport.id}`);
     }
   };
-
-  const sportSelector = (id) => (
-    <label className="navbar-sport-switch" htmlFor={id}>
-      <span>{t("球類")}</span>
-      <select id={id} value={selectedSport?.id || ""} onChange={handleSportChange} disabled={sports.length === 0}>
-        {!selectedSport && <option value="">{t("載入中")}</option>}
-        {sports.map((sport) => <option key={sport.id} value={sport.id}>{sport.name}</option>)}
-      </select>
-    </label>
-  );
 
   useEffect(() => {
     let isMounted = true;
@@ -158,7 +147,7 @@ function Navbar() {
       </ul>
       
       <div className="navbar-actions">
-      <div className="navbar-sport-desktop">{sportSelector("navbar-sport-desktop")}</div>
+      <div className="navbar-sport-desktop"><SportSwitcher id="navbar-sport-desktop" sports={sports} selectedSport={selectedSport} onSelect={handleSportChange} /></div>
       <div ref={dropdownRef} className={`navbar-right dropdown ${isMenuOpen ? "is-open" : ""}`}>
         <button
           type="button"
@@ -195,7 +184,7 @@ function Navbar() {
             </div>
           </div>
           <div className="dropdown-links">
-            <div className="navbar-sport-mobile">{sportSelector("navbar-sport-mobile")}</div>
+            <div className="navbar-sport-mobile"><SportSwitcher id="navbar-sport-mobile" sports={sports} selectedSport={selectedSport} onSelect={handleSportChange} restoreFocusOnSelect={false} /></div>
             <Link onClick={() => setIsMenuOpen(false)} to="/external/group">{t("臨打")}</Link>
             <Link onClick={() => setIsMenuOpen(false)} to={`/external/home/${currentType}`}>{t("場地")}</Link>
             <Link className="nav-notification-link" aria-label={notificationLabel} onClick={() => setIsMenuOpen(false)} to="/external/announce">{t("通知")}{badge}</Link>

@@ -81,7 +81,7 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 1. 設定 `REACT_APP_LINE_DEMO_MODE=false` 和 `REACT_APP_LINE_CHANNEL_ID`（**LINE Login** channel 的 Channel ID，不是 LIFF ID 或 Channel Secret）。
 2. 目前本機的 `.env.development.local` 設有 `PORT=5713` 和 `REACT_APP_LINE_REDIRECT_URI=http://localhost:5713/line/callback`。正式建置不要使用本機 callback；未設定 `REACT_APP_LINE_REDIRECT_URI` 時，預設是目前網頁的 origin 加 `/line/callback`。實際 URI 必須與 LINE Developers 的 callback URL、後端 `LINE_REDIRECT_URIS` 允許清單完全相同。正式環境需把正式網域的 URI 也加入兩處設定。
 3. 後端必須設定好 LINE Channel ID、Channel Secret、`LINE_REDIRECT_URIS`，並允許前端網域以憑證呼叫 API（CORS credentials）。文件中的正式環境 Cookie 是 `__Host-session; HttpOnly; Secure; SameSite=Lax`；前端與 API 都需在 `gravitycat.tw` 之下。重啟或重建前端後再測試。
-4. 登入頁點「使用 LINE 登入／註冊」；既有 LINE 帳號應登入，新 LINE 帳號應由 API 建立後登入。可在瀏覽器 Network 檢查 `POST /auth/line` 的回應，但不要記錄或分享授權碼、token、Cookie。
+4. 登入頁點「使用 LINE 登入／註冊」；新帳號或尚未填完基本資料的帳號會回到 `/line-login` 補填顯示名稱、性別與出生日期（電話選填），以 `PATCH /me` 儲存後進入臨打團頁。資料完整的既有帳號直接進入臨打團頁。可在瀏覽器 Network 檢查 `POST /auth/line` 的回應，但不要記錄或分享授權碼、token、Cookie。
 
 所有 API 請求都會帶 Cookie。網站啟動時呼叫 `POST /auth/refresh` 恢復登入；既有 Access Token 過期時也會先 refresh 再重送原請求。登出呼叫 `POST /auth/logout` 撤銷 session。若 LINE channel 已獲准 Email address permission，可設 `REACT_APP_LINE_EMAIL_SCOPE=true`，授權時才會要求 `email` 權限。
 
