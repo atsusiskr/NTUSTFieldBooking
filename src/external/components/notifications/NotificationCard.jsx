@@ -104,7 +104,7 @@ function RelatedInfo({ notification }) {
       <p className="mt-1 break-all text-xs text-slate-600">{notification.pickup_order_id}</p>
     </div>}
     <div className="flex flex-wrap gap-4 text-sm font-medium text-blue-600">
-      {groupId && <Link className="hover:underline" to="/external/group">{t("notificationPage.relatedInfo.openGroups")}</Link>}
+      {groupId && <Link className="hover:underline" to="/external/pickup">{t("notificationPage.relatedInfo.openGroups")}</Link>}
       {notification.pickup_order_id && <Link className="hover:underline" to="/external/order">{t("notificationPage.relatedInfo.openOrders")}</Link>}
     </div>
   </div>;

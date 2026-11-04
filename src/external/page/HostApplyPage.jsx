@@ -50,7 +50,7 @@ function HostApplyPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       successPopup(t("送出成功"), t("申請已送出！管理員將在 1-3 個工作天內審核。"));
-      navigate("/external/group");
+      navigate("/external/pickup");
     } catch (error) {
       const failure = describeRequestError(error);
       errorPopup(failure.title, failure.message);

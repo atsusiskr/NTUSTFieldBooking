@@ -51,7 +51,7 @@ export function LineAuthorizationPage() {
       const { redirectUri, codeVerifier, nonce } = consumeLineTransaction(returnedState);
       await loginWithLineService({ code, redirectUri, codeVerifier, nonce });
       if (!sportId) setSportId("badminton");
-      navigate("/external/group", { replace: true });
+      navigate("/external/pickup", { replace: true });
     };
 
     completeLogin().catch((reason) => {

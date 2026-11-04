@@ -64,7 +64,7 @@ function LoginPage() {
       setLoggingIn(true);
       await loginService(email, password);
       setSportId(getLoginSportId());
-      navigate(`external/group`);
+      navigate("/external/pickup");
 
     } catch (error) {
       const failure = error?.message === "Invalid credentials" ? {

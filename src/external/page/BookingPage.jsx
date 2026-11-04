@@ -99,7 +99,7 @@ export default function BookingPage() {
     <Navbar />
     <Loading isLoading={loading} text={t("取得場地資訊中...")} />
     <main className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
-      <Link to={`/external/home/${sportId || "badminton"}`} className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-700"><ArrowLeft size={17} />{t("返回場地列表")}</Link>
+      <Link to={`/external/venue/${sportId || "badminton"}`} className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-700"><ArrowLeft size={17} />{t("返回場地列表")}</Link>
       {error && <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-800">{t("場地資訊載入失敗，請重新整理頁面。")}</div>}
       {!loading && !error && location && <>
         <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">

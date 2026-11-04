@@ -30,9 +30,9 @@ function Navbar() {
   const currentType = sportId || (sportType && sportType !== "all" ? sportType : null) || "badminton";
   const selectedSport = findVenueSport(sports, currentType);
   const pathname = location.pathname;
-  const activeSection = pathname === "/external/group" ? "group"
-    : pathname.startsWith("/external/home/") || locationId || pathname === "/external/pay" ? "venue"
-      : pathname === "/external/announce" ? "announcements"
+  const activeSection = pathname === "/external/pickup" ? "pickup"
+    : pathname === "/external/venue" || pathname.startsWith("/external/venue/") || locationId || pathname === "/external/pay" ? "venue"
+      : pathname === "/external/notification" ? "notification"
         : pathname.startsWith("/external/order") ? "orders" : null;
   const isActive = (section) => activeSection === section;
 
@@ -52,7 +52,7 @@ function Navbar() {
     if (!selectedSport) return;
     if (sportId !== selectedSport.id) setSportId(selectedSport.id);
     if (sportType && sportType !== selectedSport.id) {
-      navigate(`/external/home/${selectedSport.id}`, { replace: true });
+      navigate(`/external/venue/${selectedSport.id}`, { replace: true });
     }
   }, [sportType, navigate, selectedSport, setSportId, sportId]);
 
@@ -60,7 +60,7 @@ function Navbar() {
     setSportId(sport.id);
     setIsMenuOpen(false);
     if (sportType || locationId || location.pathname === "/external/pay") {
-      navigate(`/external/home/${sport.id}`);
+      navigate(`/external/venue/${sport.id}`);
     }
   };
 
@@ -146,9 +146,9 @@ function Navbar() {
       
       {/* central menu */}
       <ul className="navbar-center">
-        <li className={isActive("group") ? "is-active" : undefined}><Link className={isActive("group") ? "is-active" : undefined} aria-current={isActive("group") ? "page" : undefined} to="/external/group">{t("臨打")}</Link></li>
-        <li className={isActive("venue") ? "is-active" : undefined}><Link className={isActive("venue") ? "is-active" : undefined} aria-current={pathname === `/external/home/${currentType}` ? "page" : undefined} to={`/external/home/${currentType}`}>{t("場地")}</Link></li>
-        <li className={isActive("announcements") ? "is-active" : undefined}><Link className={`nav-notification-link${isActive("announcements") ? " is-active" : ""}`} aria-current={isActive("announcements") ? "page" : undefined} aria-label={notificationLabel} to="/external/announce">{t("通知")}{badge}</Link></li>
+        <li className={isActive("pickup") ? "is-active" : undefined}><Link className={isActive("pickup") ? "is-active" : undefined} aria-current={isActive("pickup") ? "page" : undefined} to="/external/pickup">{t("臨打")}</Link></li>
+        <li className={isActive("venue") ? "is-active" : undefined}><Link className={isActive("venue") ? "is-active" : undefined} aria-current={isActive("venue") ? "page" : undefined} to={`/external/venue/${currentType}`}>{t("場地")}</Link></li>
+        <li className={isActive("notification") ? "is-active" : undefined}><Link className={`nav-notification-link${isActive("notification") ? " is-active" : ""}`} aria-current={isActive("notification") ? "page" : undefined} aria-label={notificationLabel} to="/external/notification">{t("通知")}{badge}</Link></li>
         <li className={isActive("orders") ? "is-active" : undefined}><Link className={isActive("orders") ? "is-active" : undefined} aria-current={pathname === "/external/order" ? "page" : undefined} to="/external/order">{t("我的預約")}</Link></li>
       </ul>
       
@@ -191,9 +191,9 @@ function Navbar() {
           </div>
           <div className="dropdown-links">
             <div className="navbar-sport-mobile"><SportSwitcher id="navbar-sport-mobile" sports={sports} selectedSport={selectedSport} onSelect={handleSportChange} restoreFocusOnSelect={false} /></div>
-            <Link className={isActive("group") ? "is-active" : undefined} aria-current={isActive("group") ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/group">{t("臨打")}</Link>
-            <Link className={isActive("venue") ? "is-active" : undefined} aria-current={pathname === `/external/home/${currentType}` ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to={`/external/home/${currentType}`}>{t("場地")}</Link>
-            <Link className={`nav-notification-link${isActive("announcements") ? " is-active" : ""}`} aria-current={isActive("announcements") ? "page" : undefined} aria-label={notificationLabel} onClick={() => setIsMenuOpen(false)} to="/external/announce">{t("通知")}{badge}</Link>
+            <Link className={isActive("pickup") ? "is-active" : undefined} aria-current={isActive("pickup") ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/pickup">{t("臨打")}</Link>
+            <Link className={isActive("venue") ? "is-active" : undefined} aria-current={isActive("venue") ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to={`/external/venue/${currentType}`}>{t("場地")}</Link>
+            <Link className={`nav-notification-link${isActive("notification") ? " is-active" : ""}`} aria-current={isActive("notification") ? "page" : undefined} aria-label={notificationLabel} onClick={() => setIsMenuOpen(false)} to="/external/notification">{t("通知")}{badge}</Link>
             <Link className={pathname === "/external/order" ? "is-active" : undefined} aria-current={pathname === "/external/order" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/order">{t("我的預約")}</Link>
             <Link className={pathname === "/external/order/history" ? "is-active" : undefined} aria-current={pathname === "/external/order/history" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/order/history">{t("歷史預約")}</Link>
             <Link className={pathname === "/external/user" ? "is-active" : undefined} aria-current={pathname === "/external/user" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/user">{t("個人資料")}</Link>
