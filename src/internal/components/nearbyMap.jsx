@@ -1,5 +1,5 @@
 import { useTranslation } from "../../locale/i18n";
-import { buildPlacesWithColor, EMPTY_FIELDS } from "../../utils/mapPins";
+import { buildPlacesWithColor, EMPTY_VENUES } from "../../utils/mapPins";
 import { GoogleMap, LoadScript, OverlayView } from "@react-google-maps/api";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { RiMapPinUserFill } from "react-icons/ri";
@@ -8,7 +8,7 @@ import { RiMapPin2Fill } from "react-icons/ri";
 import { FaSearch } from "react-icons/fa";
 
 
-function NearbyMap({ filter, fields = EMPTY_FIELDS, onConfirmPlace = () => { } }) {
+function NearbyMap({ filter, venues = EMPTY_VENUES, onConfirmPlace = () => { } }) {
   const t = useTranslation();
 
   const [currentPosition, setCurrentPosition] = useState(null);
@@ -52,8 +52,8 @@ function NearbyMap({ filter, fields = EMPTY_FIELDS, onConfirmPlace = () => { } }
   }, []);
 
   const placesWithColor = useMemo(
-    () => buildPlacesWithColor(fields, currentPosition, t),
-    [fields, currentPosition, t]
+    () => buildPlacesWithColor(venues, currentPosition, t),
+    [venues, currentPosition, t]
   );
 
   const handleRecenter = () => {

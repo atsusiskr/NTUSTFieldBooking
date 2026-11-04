@@ -5,7 +5,7 @@ import "./bookingpage.css";
 import Calendar from "../../components/dayPicker/dayPick";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import FieldPicker from "../../components/fieldPicker";
+import VenuePicker from "../../components/venuePicker";
 import { formatDateTime } from "../../utils/dateTimeFormat";
 
 const OPEN_HOUR = 8;
@@ -15,25 +15,25 @@ const HOURS = Array.from({ length: CLOSE_HOUR - OPEN_HOUR }, (_, i) => OPEN_HOUR
 function Bookpage() {
   const t = useTranslation();
     const { name, isSchool, pict } = useParams();
-    const imgUrl = '/field_img/' + pict;
+    const imgUrl = '/venue_img/' + pict;
     const [activeTab, setActiveTab] = useState("info");
     const [isOpen, setIsOpen] = useState(true);
-    const [selectedField, setSelectedField] = useState(null);
+    const [selectedVenue, setSelectedVenue] = useState(null);
 
-    const [selectedSlots, setSelectedSlots] = useState({ fieldKey: null, times: [] });
+    const [selectedSlots, setSelectedSlots] = useState({ venueKey: null, times: [] });
 
     const courts = [1, 2, 3];
 
-    const toggleSlot = (fieldKey, timeIndex) => {
+    const toggleSlot = (venueKey, timeIndex) => {
         setSelectedSlots((prev) => {
-            const { fieldKey: prevKey, times } = prev;
+            const { venueKey: prevKey, times } = prev;
 
-            if (!prevKey || prevKey !== fieldKey) {
-                return { fieldKey, times: [timeIndex] };
+            if (!prevKey || prevKey !== venueKey) {
+                return { venueKey, times: [timeIndex] };
             }
 
             if (times.includes(timeIndex)) {
-                return { fieldKey, times: times.filter((t) => t !== timeIndex) };
+                return { venueKey, times: times.filter((t) => t !== timeIndex) };
             }
 
             const min = Math.min(...times);
@@ -41,10 +41,10 @@ function Bookpage() {
             const isAdjacent = timeIndex === min - 1 || timeIndex === max + 1;
 
             if (!isAdjacent) {
-                return { fieldKey, times: [timeIndex] };
+                return { venueKey, times: [timeIndex] };
             }
 
-            return { fieldKey, times: [...times, timeIndex].sort((a, b) => a - b) };
+            return { venueKey, times: [...times, timeIndex].sort((a, b) => a - b) };
         });
     };
 
@@ -63,20 +63,20 @@ function Bookpage() {
 
                 {/* 左側 */}
                 <div className="left-panel">
-                    <div className="field-board flex justify-center">
+                    <div className="venue-board flex justify-center">
                         {isSchool === 'true' ? (
-                            <img src={imgUrl} alt={t("場地圖片")} className="field-image" />
+                            <img src={imgUrl} alt={t("場地圖片")} className="venue-image" />
                         ) : (
-                            <FieldPicker
-                                fieldName={name}
-                                selectedId={selectedField}
-                                onSelectField={({ id }) => setSelectedField(id)}
+                            <VenuePicker
+                                venueName={name}
+                                selectedId={selectedVenue}
+                                onSelectVenue={({ id }) => setSelectedVenue(id)}
                             />
                         )}
                     </div>
                     <div className="md:px-[50px]">
                         <h2 className="flex justify-self-start text-3xl font-medium">{name}</h2>
-                        <p className="field-description">{t("跟你們介紹一下這個網球場，這裡是拿來打籃球的，\n                            不是打羽球的")}
+                        <p className="venue-description">{t("跟你們介紹一下這個網球場，這裡是拿來打籃球的，\n                            不是打羽球的")}
                         </p>
                     </div>
                     {/* Tabs */}
@@ -201,16 +201,16 @@ function Bookpage() {
                                                         <div className="flex justify-center gap-2">
                                                             {/* 桌機版：顯示每面球場按鈕 */}
                                                             {courts.map((court) => {
-                                                                const fieldKey = `${court}-${name}-${dateKey}`;
+                                                                const venueKey = `${court}-${name}-${dateKey}`;
                                                                 const isSelected =
-                                                                    selectedSlots.fieldKey === fieldKey &&
+                                                                    selectedSlots.venueKey === venueKey &&
                                                                     selectedSlots.times.includes(timeIndex);
 
                                                                 return (
                                                                     <button
                                                                         key={court}
                                                                         disabled={isFull}
-                                                                        onClick={() => !isFull && toggleSlot(fieldKey, timeIndex)}
+                                                                        onClick={() => !isFull && toggleSlot(venueKey, timeIndex)}
                                                                         className={`hidden md:table-cell w-8 h-10 rounded-full font-medium transition
                                                                             ${isFull
                                                                                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
@@ -229,13 +229,13 @@ function Bookpage() {
                                                                 <button
                                                                     disabled={isFull}
                                                                     onClick={() => {
-                                                                        const fieldKey = `${name}-${dateKey}`;
-                                                                        if (!isFull) toggleSlot(fieldKey, timeIndex);
+                                                                        const venueKey = `${name}-${dateKey}`;
+                                                                        if (!isFull) toggleSlot(venueKey, timeIndex);
                                                                     }}
                                                                     className={`md:hidden text-xs font-semibold px-2 py-1 rounded-md shadow transition
                                                                         ${isFull
                                                                             ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                                                                            : (selectedSlots.fieldKey === `${name}-${dateKey}` && selectedSlots.times.includes(timeIndex))
+                                                                            : (selectedSlots.venueKey === `${name}-${dateKey}` && selectedSlots.times.includes(timeIndex))
                                                                                 ? "bg-blue-600 text-gray-100"
                                                                                 : "bg-blue-100 text-blue-600"}
                                                                     `}

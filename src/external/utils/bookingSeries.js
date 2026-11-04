@@ -30,7 +30,7 @@ export function createBookingSeriesPayload(prepared, termMonths, now = new Date(
   for (const entry of prepared) {
     if (!entry?.normalizedDate || !entry?.item?.resourceId || !entry?.tr ||
       String(entry.item.resourceId) !== String(resourceId) ||
-      (first.item.fieldId && entry.item.fieldId && String(entry.item.fieldId) !== String(first.item.fieldId))) {
+      (first.item.venueId && entry.item.venueId && String(entry.item.venueId) !== String(first.item.venueId))) {
       throw new Error(translate("季租、半年租及年租只能選同一面場地，請返回調整選取項目。"));
     }
     if (entry.tr.start !== startTime || entry.tr.end !== endTime) {

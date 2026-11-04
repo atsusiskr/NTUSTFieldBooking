@@ -1,11 +1,11 @@
-.field-picker {
+.venue-picker {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   padding: 12px;
 }
 
-.field-area {
+.venue-area {
   padding: 10px 16px;
   background-color: #f0f0f0;
   border: 1px solid #ccc;
@@ -15,10 +15,10 @@
   transition: background-color 0.2s, transform 0.1s;
 }
 
-.field-area:hover {
+.venue-area:hover {
   background-color: #e0eaff;
 }
 
-.field-area:active {
+.venue-area:active {
   transform: scale(0.96);
 }

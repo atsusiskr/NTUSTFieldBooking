@@ -165,6 +165,6 @@ export default function BookingPage() {
         </section>
       </>}
     </main>
-    {!loading && !error && location && (resources.length ? <VenueBookingCards key={sportId} fields={[{ ...location, resources }]} selectedDate={selectedDate} selectedVenueId={id} sportFilter={sportId} detailMode /> : <p className="mx-auto max-w-7xl px-4 pb-12 text-slate-600 sm:px-6">{t("此場地目前沒有可預約的場面。")}</p>)}
+    {!loading && !error && location && (resources.length ? <VenueBookingCards key={sportId} venues={[{ ...location, resources }]} selectedDate={selectedDate} selectedVenueId={id} sportFilter={sportId} detailMode /> : <p className="mx-auto max-w-7xl px-4 pb-12 text-slate-600 sm:px-6">{t("此場地目前沒有可預約的場面。")}</p>)}
   </div>;
 }

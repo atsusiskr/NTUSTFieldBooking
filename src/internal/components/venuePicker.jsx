@@ -1,18 +1,19 @@
-import { useTranslation } from "../../../locale/i18n";
-import './fieldPicker.css';
-import layouts from '../outFieldLayout.json';
+import { useTranslation } from "../../locale/i18n";
+import './venuePicker.css';
+import layouts from './venueLayout.json';
 
-function FieldPicker({ fieldId, onSelectField, selectedId }) {
+function VenuePicker({ venueName, onSelectVenue, selectedId }) {
   const t = useTranslation();
     let layout = null;
-    layout = layouts[String(fieldId)]
+    layout = layouts[venueName];
 
     if (!layout) {
-        return <div className="field-diagram-error">{t("找不到")}{fieldId}{t("場地資料")}</div>;
+        return <div className="venue-diagram-error">{t("找不到「")}{String(venueName)}{t("」的場地資料")}</div>;
     }
 
     const vb = { w: 1000, h: 600 };
 
+    // 先寫死每個場地格子的價格區間（之後可改成由 API / props 傳入）
     const PRICE_RANGE_MAP = {
         "1": "$300-$500",
         "2": "$300-$500",
@@ -33,21 +34,10 @@ function FieldPicker({ fieldId, onSelectField, selectedId }) {
 
     const handlePick = (id) => {
         const nextId = id === selectedId ? null : id;
-        onSelectField({ id: nextId });
+        onSelectVenue({ id: nextId });
     }
-
-    const getSectorPath = (cx, cy, r, startDeg, endDeg) => {
-        const toRad = (deg) => (deg * Math.PI) / 180;
-        const x1 = cx + r * Math.cos(toRad(startDeg));
-        const y1 = cy + r * Math.sin(toRad(startDeg));
-        const x2 = cx + r * Math.cos(toRad(endDeg));
-        const y2 = cy + r * Math.sin(toRad(endDeg));
-        const largeArcFlag = endDeg - startDeg <= 180 ? 0 : 1;
-        return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
-    };
-
     return (
-        <div className="field-picker" style={{ width: '100%' }}>
+        <div className="venue-picker" style={{ width: '100%' }}>
             <svg
                 viewBox={`0 0 ${vb.w} ${vb.h}`}
                 preserveAspectRatio="xMidYMid meet"
@@ -59,7 +49,7 @@ function FieldPicker({ fieldId, onSelectField, selectedId }) {
                     const isDisabled = a.status === 'blocked';
                     const fill = isDisabled ? '#7d7d7dff' : isSelected ? '#3f7cff' : '#d9d9d9';
                     const stroke = isSelected ? 'rgba(63,124,255,0.6)' : 'transparent';
-                    const cardSize = (a.hori === true) ? { w: 220, h: 140 } : { w: 140, h: 220 }
+                    const cardSize = (a.hori === true)? { w: 220, h: 140 } : { w: 140, h: 220 }
                     const priceText = a.priceRange ?? PRICE_RANGE_MAP[String(a.id)] ?? null;
 
                     return (
@@ -112,28 +102,14 @@ function FieldPicker({ fieldId, onSelectField, selectedId }) {
                         const fill = f.fill || (isDoor ? '#10c900' : '#666');
                         return (
                             <g key={idx}>
-                                {(isDoor) ? (
-                                    <path
-                                        d={getSectorPath(
-                                            f.x + f.w / 1.25,
-                                            f.y + f.h / 1.25,
-                                            Math.min(f.w, f.h),
-                                            180,
-                                            270
-                                        )}
-                                        fill={fill}
-                                    />
-                                ) : (
-                                    <rect
-                                        x={f.x} y={f.y} width={f.w} height={f.h}
-                                        rx={f.rx ?? 6}
-                                        fill={fill}
-                                    />
-                                )}
-
+                                <rect
+                                    x={f.x} y={f.y} width={f.w} height={f.h}
+                                    rx={f.rx ?? 6}
+                                    fill={fill}
+                                />
                                 {f.text && (
                                     <text
-                                        x={(f.x + f.w / 2)}
+                                        x={f.x + f.w / 2}
                                         y={f.y + f.h / 2}
                                         textAnchor="middle"
                                         dominantBaseline="middle"
@@ -159,4 +135,4 @@ function defaultFixtures(vb) {
     ];
 }
 
-export default FieldPicker;
+export default VenuePicker;

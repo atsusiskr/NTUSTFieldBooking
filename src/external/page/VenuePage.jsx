@@ -15,9 +15,9 @@ import { useSportStore } from "../../store/sportStore";
 import { describeRequestError } from "../../utils/requestError";
 
 export default function VenuePage() {
-  const { fieldType } = useParams();
+  const { sportType } = useParams();
   const sportId = useSportStore((state) => state.sportId);
-  const selection = sportId || (fieldType && fieldType !== "all" ? fieldType : null) || "badminton";
+  const selection = sportId || (sportType && sportType !== "all" ? sportType : null) || "badminton";
   return <VenuePageContent key={selection} selection={selection} />;
 }
 
@@ -25,7 +25,7 @@ function VenuePageContent({ selection }) {
   const t = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [filteredFields, setFilteredFields] = useState([]);
+  const [filteredVenues, setFilteredVenues] = useState([]);
   const [selectedSport, setSelectedSport] = useState(null);
   const [selectedDate, setSelectedDate] = useState(earliestBookingDate);
   const [selectedVenueId, setSelectedVenueId] = useState(null);
@@ -33,11 +33,11 @@ function VenuePageContent({ selection }) {
   useEffect(() => {
     let cancelled = false;
 
-    const loadFields = async () => {
+    const loadVenues = async () => {
       setLoading(true);
       setError(false);
       setSelectedVenueId(null);
-      setFilteredFields([]);
+      setFilteredVenues([]);
       try {
         const sportResponse = await sportService.getSportList();
         if (cancelled) return;
@@ -48,7 +48,7 @@ function VenuePageContent({ selection }) {
         setSelectedSport(sport);
         const res = await api.get("/locations");
         const token = localStorage.getItem("token");
-        const filteredField = await Promise.all(
+        const filteredVenue = await Promise.all(
           (res.data?.items || []).map(async (loc) => {
             const resource = await api.get("/resources", {
               headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -66,7 +66,7 @@ function VenuePageContent({ selection }) {
           })
         )
         if (!cancelled) {
-          setFilteredFields(filteredField.filter(Boolean));
+          setFilteredVenues(filteredVenue.filter(Boolean));
         }
       }
       catch (error) {
@@ -78,7 +78,7 @@ function VenuePageContent({ selection }) {
         }
       }
     }
-    loadFields();
+    loadVenues();
     return () => { cancelled = true; };
   }, [selection]);
 
@@ -94,7 +94,7 @@ function VenuePageContent({ selection }) {
       <Loading isLoading={loading} text={t("載入場地資料中...")} />
       <main className="mx-auto max-w-7xl px-4 sm:px-6">
         <h1 className="text-3xl font-bold text-center my-8">{t("場地預約")}</h1>
-        <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3"><NearbyMap key={selectedSport?.id} fields={filteredFields} onConfirmPlace={({ place }) => {
+        <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3"><NearbyMap key={selectedSport?.id} venues={filteredVenues} onConfirmPlace={({ place }) => {
           if (place?.id == null) return;
           setSelectedVenueId(place.id);
           requestAnimationFrame(() => document.getElementById("venue-booking-section")?.scrollIntoView({ behavior: "smooth", block: "start" }));
@@ -119,9 +119,9 @@ function VenuePageContent({ selection }) {
           </div>
         </section>
         {error && <section role="alert" className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700 sm:p-6">{t("場地資料載入失敗：")}{error}</section>}
-        {!loading && !error && filteredFields.length === 0 && <section role="status" aria-label={t("場地搜尋結果")} className="mb-8 rounded-2xl border border-slate-200 bg-white p-4 text-slate-600 shadow-sm sm:p-6">{t("目前沒有提供")}{selectedSport?.name}{t("場面的場館。")}</section>}
+        {!loading && !error && filteredVenues.length === 0 && <section role="status" aria-label={t("場地搜尋結果")} className="mb-8 rounded-2xl border border-slate-200 bg-white p-4 text-slate-600 shadow-sm sm:p-6">{t("目前沒有提供")}{selectedSport?.name}{t("場面的場館。")}</section>}
       </main>
-      {!loading && !error && filteredFields.length > 0 && <VenueBookingCards key={selectedSport?.id} fields={filteredFields} selectedDate={selectedDate} selectedVenueId={selectedVenueId} sportFilter={selectedSport?.id} />}
+      {!loading && !error && filteredVenues.length > 0 && <VenueBookingCards key={selectedSport?.id} venues={filteredVenues} selectedDate={selectedDate} selectedVenueId={selectedVenueId} sportFilter={selectedSport?.id} />}
     </div>
   );
 }

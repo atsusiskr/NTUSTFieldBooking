@@ -4,22 +4,22 @@ export const bookingSlotKey = (resourceId, date, hour) => `${resourceId}|${date}
 
 export function groupBookingSlots(slots) {
   const ordered = [...slots].sort((a, b) =>
-    a.date.localeCompare(b.date) || String(a.fieldId).localeCompare(String(b.fieldId)) ||
+    a.date.localeCompare(b.date) || String(a.venueId).localeCompare(String(b.venueId)) ||
     String(a.resourceId).localeCompare(String(b.resourceId)) || a.hour - b.hour
   );
   const groups = [];
 
   for (const slot of ordered) {
     const last = groups[groups.length - 1];
-    if (last && last.date === slot.date && last.fieldId === slot.fieldId &&
+    if (last && last.date === slot.date && last.venueId === slot.venueId &&
       last.resourceId === slot.resourceId && last.endHour === slot.hour) {
       last.endHour += 1;
       last.hours += 1;
       last.totalPrice += Number(slot.price);
     } else {
       groups.push({
-        fieldId: slot.fieldId,
-        fieldName: slot.fieldName,
+        venueId: slot.venueId,
+        venueName: slot.venueName,
         resourceId: slot.resourceId,
         resourceName: slot.resourceName,
         date: slot.date,

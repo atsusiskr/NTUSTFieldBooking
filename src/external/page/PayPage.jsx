@@ -32,8 +32,8 @@ function PayPage() {
   const submittingRef = useRef(false);
 
   const {
-    fieldName,
-    fieldId,
+    venueName,
+    venueId,
     resourceName,
     resourceIdx,
     date,
@@ -110,7 +110,7 @@ function PayPage() {
 
   const bookingItems = Array.isArray(location.state.bookingItems)
     ? location.state.bookingItems
-    : [{ fieldId, fieldName, resourceId: resourceIdx, resourceName, date, timeRange, hours, totalPrice }];
+    : [{ venueId, venueName, resourceId: resourceIdx, resourceName, date, timeRange, hours, totalPrice }];
   const payableTotal = bookingItems.reduce((sum, item) => sum + Number(item.totalPrice || 0), 0);
   const rentalOptions = [
     { value: "single", label: "單次預約", duration: "只預約上方時段" },
@@ -164,7 +164,7 @@ function PayPage() {
     try {
       submittingRef.current = true;
       setIsSubmitting(true);
-      const venueIds = [...new Set(prepared.map(({ item }) => item.fieldId).filter(Boolean))];
+      const venueIds = [...new Set(prepared.map(({ item }) => item.venueId).filter(Boolean))];
       const venueEntries = await Promise.all(venueIds.map(async (id) => {
         const { data } = await api.get(`/locations/${id}`);
         return [String(id), data];
@@ -177,9 +177,9 @@ function PayPage() {
           setSubmitError(t("需提前 7 天預約，最早可選 {value0}。請返回重新選擇日期。", { value0: formatDateTime(earliestBookingDate()).numericDate }));
           return;
         }
-        const venue = item.fieldId ? venues.get(String(item.fieldId)) : null;
-        if (item.fieldId && !venue) {
-          setSubmitError(t("無法確認「{value0}」的場地資料，請稍後再試。", { value0: item.fieldName }));
+        const venue = item.venueId ? venues.get(String(item.venueId)) : null;
+        if (item.venueId && !venue) {
+          setSubmitError(t("無法確認「{value0}」的場地資料，請稍後再試。", { value0: item.venueName }));
           return;
         }
         if (venue) {
@@ -187,11 +187,11 @@ function PayPage() {
           const closes = clockMinutes(venue.opening_hours_end);
           const startsAt = clockMinutes(tr.start);
           const endsAt = clockMinutes(tr.end);
-          console.log("[預約場地] 營業時間檢查", { fieldId: item.fieldId, payload, opening: venue.opening,
+          console.log("[預約場地] 營業時間檢查", { venueId: item.venueId, payload, opening: venue.opening,
             opening_hours_start: venue.opening_hours_start, opening_hours_end: venue.opening_hours_end });
           if (venue.opening === false || opens === null || closes === null || startsAt === null || endsAt === null ||
             startsAt < opens || endsAt > closes || startsAt >= endsAt) {
-            setSubmitError(t("「{value0}・{value1}」{value2} 不在可預約時間內（營業時間 {value3}–{value4}）。請返回重新選擇。", { value0: item.fieldName, value1: item.resourceName, value2: item.timeRange, value3: formatDateTime(venue.opening_hours_start).time, value4: formatDateTime(venue.opening_hours_end).time }));
+            setSubmitError(t("「{value0}・{value1}」{value2} 不在可預約時間內（營業時間 {value3}–{value4}）。請返回重新選擇。", { value0: item.venueName, value1: item.resourceName, value2: item.timeRange, value3: formatDateTime(venue.opening_hours_start).time, value4: formatDateTime(venue.opening_hours_end).time }));
             return;
           }
         }
@@ -227,7 +227,7 @@ function PayPage() {
       for (const { item, payload } of prepared) {
         const key = `${payload.resource_id}|${payload.start_time}|${payload.end_time}`;
         if (completed.has(key)) continue;
-        console.log("[預約場地] POST /bookings", { fieldId: item.fieldId, payload });
+        console.log("[預約場地] POST /bookings", { venueId: item.venueId, payload });
         try {
           await api.post("/bookings", payload, { headers: {
             "Content-Type": "application/json",
@@ -236,7 +236,7 @@ function PayPage() {
           completed.add(key);
           setCompletedBookings([...completed]);
         } catch (e) {
-          console.error("[預約場地] 送出失敗", { fieldId: item.fieldId, payload,
+          console.error("[預約場地] 送出失敗", { venueId: item.venueId, payload,
             status: e?.response?.status, response: e?.response?.data, message: e?.message });
           const detail = requestErrorDetail(e);
           const message = /booking must fall within the location's opening hours/i.test(detail)
@@ -277,7 +277,7 @@ function PayPage() {
           <ul className="max-h-80 space-y-3 overflow-y-auto">
             {bookingItems.map((item, index) => <li key={`${item.resourceId}-${item.date}-${item.timeRange}-${index}`} className="rounded-lg border border-gray-200 p-4 text-sm">
               <div className="flex flex-wrap justify-between gap-2">
-                <strong className="text-gray-800">{item.fieldName}・{item.resourceName || t("場地")}</strong>
+                <strong className="text-gray-800">{item.venueName}・{item.resourceName || t("場地")}</strong>
                 <span className="font-semibold text-blue-700">NT$ {Number(item.totalPrice).toLocaleString("zh-TW")}</span>
               </div>
               <p className="mt-2 text-gray-600">{item.date}　{item.timeRange}　·　{item.hours} {t("小時")}</p>

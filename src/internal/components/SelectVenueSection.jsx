@@ -5,7 +5,7 @@ import api from "../../baseApi";
 import { formatDateTime } from "../../utils/dateTimeFormat";
 import { describeRequestError } from "../../utils/requestError";
 
-function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate}) {
+function SelectVenueSection({ token, venues, venueChecked = null, selectedDate}) {
   const t = useTranslation();
   const navigate = useNavigate();
   const [selectedSlots, setSelectedSlots] = useState(null);
@@ -128,8 +128,8 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
     return map;
   }, [bookings]);
 
-  const handleFieldClick = (fieldId) => {
-    navigate(`/${fieldId}/`);
+  const handleVenueClick = (venueId) => {
+    navigate(`/${venueId}/`);
   };
 
   //判斷是否為連續時段
@@ -142,19 +142,19 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
     return true;
   };
 
-  const handleSelectSlot = ({ fieldIdx, resourceIdx, hour, date }) => {
+  const handleSelectSlot = ({ venueIdx, resourceIdx, hour, date }) => {
     const dateKey = date ? dateKeyLocal(new Date(date)) : null;
     setSelectedSlots((prev) => {
 
       if (!prev) {
-        return { fieldIdx, resourceIdx, hours: [hour], date: dateKey };
+        return { venueIdx, resourceIdx, hours: [hour], date: dateKey };
       }
 
-      const sameCourt = prev.fieldIdx === fieldIdx && prev.resourceIdx === resourceIdx;
+      const sameCourt = prev.venueIdx === venueIdx && prev.resourceIdx === resourceIdx;
       const sameDate = prev.date === dateKey;
 
       if (!sameCourt || !sameDate) {
-        return { fieldIdx, resourceIdx, hours: [hour], date: dateKey };
+        return { venueIdx, resourceIdx, hours: [hour], date: dateKey };
       }
 
       const hoursSet = new Set(prev.hours);
@@ -166,7 +166,7 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
       const nextHours = [...hoursSet, hour].sort((a, b) => a - b);
 
       if (!isContiguous(nextHours)) {
-        return { fieldIdx, resourceIdx, hours: [hour], date: dateKey };
+        return { venueIdx, resourceIdx, hours: [hour], date: dateKey };
       }
 
       return { ...prev, hours: nextHours };
@@ -174,7 +174,7 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
   };
 
   function tableByDate() {
-    console.log("fieldChecked in tableByDate:", fieldChecked);
+    console.log("venueChecked in tableByDate:", venueChecked);
 
     return (
       <div ref={tableRef} className="overflow-x-auto rounded-2xl ">
@@ -185,20 +185,20 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
                 {t("時段")}
               </th>
 
-              {fields.map((field, idx) => {
-                const isSelected = fieldChecked?.idx === idx;
+              {venues.map((venue, idx) => {
+                const isSelected = venueChecked?.idx === idx;
 
                 return (
                   <th
-                    id={`field-column-${idx}`}
-                    key={field.id ?? idx}
-                    onClick={() => handleFieldClick(field.id)}
+                    id={`venue-column-${idx}`}
+                    key={venue.id ?? idx}
+                    onClick={() => handleVenueClick(venue.id)}
                     className="px-4 py-2 border whitespace-nowrap cursor-pointer border-gray-300 bg-blue-100"
                   >
                     <div
                       className={`${isSelected ? "bg-blue-800" : "bg-blue-400"} text-white text-xl px-4 py-1 rounded-full transition-transform hover:scale-110 shadow-md inline-block`}
                     >
-                      {field.name}-{t(typeMap[field.resources[0].resource_type])}
+                      {venue.name}-{t(typeMap[venue.resources[0].resource_type])}
                     </div>
                   </th>
                 );
@@ -219,11 +219,11 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
                   </td>
 
                   {/* 每個場地一格 */}
-                  {fields.map((field, colIdx) => {
-                    const resources = Array.isArray(field.resources) ? field.resources : [];
+                  {venues.map((venue, colIdx) => {
+                    const resources = Array.isArray(venue.resources) ? venue.resources : [];
 
                     return (
-                      <td key={field.id ?? colIdx} className="px-3 py-3 border border-gray-300">
+                      <td key={venue.id ?? colIdx} className="px-3 py-3 border border-gray-300">
                         <div className="flex items-center justify-center gap-2">
                           
                             <button
@@ -240,7 +240,7 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
                                 const key = dateKeyLocal(baseDate);
                                 const isBooked = bookedMap?.[resourceId]?.[key]?.has(h) || false;
                                 if (isBooked) return;
-                                handleSelectSlot({ fieldIdx: colIdx, resourceIdx: 0, hour: h, date: baseDate });
+                                handleSelectSlot({ venueIdx: colIdx, resourceIdx: 0, hour: h, date: baseDate });
                               }}
                               className={`${(() => {
                                 const resourceId = resources?.[0]?.id;
@@ -248,7 +248,7 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
                                 const isBooked = resourceId ? (bookedMap?.[resourceId]?.[key]?.has(h) || false) : true;
                                 if (isBooked) return "bg-gray-300 text-gray-500 cursor-not-allowed";
                                 if (
-                                  selectedSlots?.fieldIdx === colIdx &&
+                                  selectedSlots?.venueIdx === colIdx &&
                                   Array.isArray(selectedSlots?.hours) &&
                                   selectedSlots.hours.includes(h)
                                 ) {
@@ -301,7 +301,7 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
               return translate("你已選擇：{value0} - {value1}", { value0: formatDateTime(startHour, { input: "hour" }).time, value1: formatDateTime(endHour, { input: "hour" }).time });
             })()}
             <br />
-            {translate("場地：{value0} / 第 {value1} 面", { value0: fields[selectedSlots.fieldIdx].name, value1: selectedSlots.resourceIdx + 1 })}
+            {translate("場地：{value0} / 第 {value1} 面", { value0: venues[selectedSlots.venueIdx].name, value1: selectedSlots.resourceIdx + 1 })}
           </div>
 
           <div className="flex-1" />
@@ -313,8 +313,8 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
 
               navigate(`/ntust/pay`, {
                 state: {
-                  fieldName: fields[selectedSlots.fieldIdx].name + "-" + t(typeMap[fields[selectedSlots.fieldIdx].resources[0].resource_type]),
-                  fieldKey: fields[selectedSlots.fieldIdx].resources[selectedSlots.resourceIdx].id,
+                  venueName: venues[selectedSlots.venueIdx].name + "-" + t(typeMap[venues[selectedSlots.venueIdx].resources[0].resource_type]),
+                  venueKey: venues[selectedSlots.venueIdx].resources[selectedSlots.resourceIdx].id,
                   resourceIdx: selectedSlots.resourceIdx,
                   date: formatDateTime(selectedDate).numericDate,
                   timeRange: `${formatDateTime(startHour, { input: "hour" }).time} - ${formatDateTime(endHour, { input: "hour" }).time}`,
@@ -333,4 +333,4 @@ function SelectFieldSection({ token, fields, fieldChecked = null, selectedDate})
   );
 }
 
-export default SelectFieldSection;
+export default SelectVenueSection;

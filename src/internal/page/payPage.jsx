@@ -25,8 +25,8 @@ function PayPage() {
   const [expiry, setExpiry] = useState("");
 
   const {
-    fieldName,
-    fieldKey,
+    venueName,
+    venueKey,
     resourceId,
     date,
     timeRange,
@@ -108,7 +108,7 @@ function PayPage() {
     return utc.toISOString().replace(".000Z", "Z");
   };
 
-  const resolvedResourceId = resourceId ?? extractFirstUuid(fieldKey);
+  const resolvedResourceId = resourceId ?? extractFirstUuid(venueKey);
 
   async function handlePayment() {
     setSubmitError(null);
@@ -186,13 +186,13 @@ function PayPage() {
 
       {/* Content */}
       <div className="max-w-6xl mx-auto">
-        {/* Two-column header fields */}
+        {/* Two-column header venue details */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-14 gap-y-2">
-          {/* Left: field */}
+          {/* Left: venue */}
           <div>
             <label className="block text-lg font-semibold text-gray-900 mb-3">{t("場地")}</label>
             <div className="w-full rounded-full border border-gray-300 bg-gray-50 px-6 py-3 text-gray-900">
-              {fieldName || ""}
+              {venueName || ""}
             </div>
           </div>
 
@@ -241,7 +241,7 @@ function PayPage() {
             />
           </div>
 
-          {/* 3 small fields row */}
+          {/* 3 small inputs row */}
           <div className="md:col-span-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               <div>

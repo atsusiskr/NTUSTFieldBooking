@@ -16,7 +16,7 @@ import './navbar.css';
 
 function Navbar() {
   const t = useTranslation();
-  const { fieldType, id: locationId } = useParams();
+  const { sportType, id: locationId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const sportId = useSportStore((state) => state.sportId);
@@ -27,7 +27,7 @@ function Navbar() {
   const [unread, setUnread] = useState({ count: 0, exact: true });
   const dropdownRef = useRef(null);
 
-  const currentType = sportId || (fieldType && fieldType !== "all" ? fieldType : null) || "badminton";
+  const currentType = sportId || (sportType && sportType !== "all" ? sportType : null) || "badminton";
   const selectedSport = findVenueSport(sports, currentType);
   const pathname = location.pathname;
   const activeSection = pathname === "/external/group" ? "group"
@@ -51,15 +51,15 @@ function Navbar() {
   useEffect(() => {
     if (!selectedSport) return;
     if (sportId !== selectedSport.id) setSportId(selectedSport.id);
-    if (fieldType && fieldType !== selectedSport.id) {
+    if (sportType && sportType !== selectedSport.id) {
       navigate(`/external/home/${selectedSport.id}`, { replace: true });
     }
-  }, [fieldType, navigate, selectedSport, setSportId, sportId]);
+  }, [sportType, navigate, selectedSport, setSportId, sportId]);
 
   const handleSportChange = (sport) => {
     setSportId(sport.id);
     setIsMenuOpen(false);
-    if (fieldType || locationId || location.pathname === "/external/pay") {
+    if (sportType || locationId || location.pathname === "/external/pay") {
       navigate(`/external/home/${sport.id}`);
     }
   };

@@ -1,14 +1,14 @@
-import { useTranslation } from "../../locale/i18n";
-import './fieldPicker.css';
-import layouts from './outFieldLayout.json';
+import { useTranslation } from "../locale/i18n";
+import './venuePicker.css';
+import layouts from './venueLayout.json';
 
-function FieldPicker({ fieldName, onSelectField, selectedId }) {
+function VenuePicker({ venueName, onSelectVenue, selectedId }) {
   const t = useTranslation();
     let layout = null;
-    layout = layouts[fieldName];
+    layout = layouts[venueName];
 
     if (!layout) {
-        return <div className="field-diagram-error">{t("找不到「")}{String(fieldName)}{t("」的場地資料")}</div>;
+        return <div className="venue-diagram-error">{t("找不到「")}{String(venueName)}{t("」的場地資料")}</div>;
     }
 
     const vb = { w: 1000, h: 600 };
@@ -34,10 +34,10 @@ function FieldPicker({ fieldName, onSelectField, selectedId }) {
 
     const handlePick = (id) => {
         const nextId = id === selectedId ? null : id;
-        onSelectField({ id: nextId });
+        onSelectVenue({ id: nextId });
     }
     return (
-        <div className="field-picker" style={{ width: '100%' }}>
+        <div className="venue-picker" style={{ width: '100%' }}>
             <svg
                 viewBox={`0 0 ${vb.w} ${vb.h}`}
                 preserveAspectRatio="xMidYMid meet"
@@ -135,4 +135,4 @@ function defaultFixtures(vb) {
     ];
 }
 
-export default FieldPicker;
+export default VenuePicker;

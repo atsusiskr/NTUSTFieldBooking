@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatDateTime } from "../../utils/dateTimeFormat";
 
-function SelectFieldSection({ fields, fieldChecked = null, selectedDate, defaultViewMode }) {
+function SelectVenueSection({ venues, venueChecked = null, selectedDate, defaultViewMode }) {
   const t = useTranslation();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState(defaultViewMode || "byDate");
@@ -25,11 +25,11 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
   const getSelectedTotalPrice = () => {
     if (!selectedSlots?.hours?.length) return 0;
 
-    return fields[selectedSlots.fieldIdx]?.resources?.[selectedSlots.resourceIdx]?.price * selectedSlots.hours.length;
+    return venues[selectedSlots.venueIdx]?.resources?.[selectedSlots.resourceIdx]?.price * selectedSlots.hours.length;
   };
 
   useEffect(() => {
-    const idx = fieldChecked?.idx;
+    const idx = venueChecked?.idx;
     if (idx === null || idx === undefined) return;
 
     // 確認場地後：強制切換到七日單場地
@@ -61,10 +61,10 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
         });
       });
     });
-  }, [fieldChecked?.idx]);
+  }, [venueChecked?.idx]);
 
-  const handleFieldClick = (fieldId) => {
-    navigate(`/external/${fieldId}`);
+  const handleVenueClick = (venueId) => {
+    navigate(`/external/${venueId}`);
   };
 
   //判斷是否為連續時段
@@ -77,19 +77,19 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
     return true;
   };
 
-  const handleSelectSlot = ({ fieldIdx, resourceIdx, hour, date }) => {
+  const handleSelectSlot = ({ venueIdx, resourceIdx, hour, date }) => {
     const dateKey = date ? new Date(date).toISOString().slice(0, 10) : null;
     setSelectedSlots((prev) => {
 
       if (!prev) {
-        return { fieldIdx, resourceIdx, hours: [hour], date: dateKey };
+        return { venueIdx, resourceIdx, hours: [hour], date: dateKey };
       }
 
-      const sameCourt = prev.fieldIdx === fieldIdx && prev.resourceIdx === resourceIdx;
+      const sameCourt = prev.venueIdx === venueIdx && prev.resourceIdx === resourceIdx;
       const sameDate = prev.date === dateKey;
 
       if (!sameCourt || !sameDate) {
-        return { fieldIdx, resourceIdx, hours: [hour], date: dateKey };
+        return { venueIdx, resourceIdx, hours: [hour], date: dateKey };
       }
 
       const hoursSet = new Set(prev.hours);
@@ -101,7 +101,7 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
       const nextHours = [...hoursSet, hour].sort((a, b) => a - b);
 
       if (!isContiguous(nextHours)) {
-        return { fieldIdx, resourceIdx, hours: [hour], date: dateKey };
+        return { venueIdx, resourceIdx, hours: [hour], date: dateKey };
       }
 
       return { ...prev, hours: nextHours };
@@ -110,7 +110,7 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
 
   {/* 單日多場地表格 */ }
   function tableByDate() {
-    console.log("fieldChecked in tableByDate:", fieldChecked);
+    console.log("venueChecked in tableByDate:", venueChecked);
 
     return (
       <div ref={tableRef} className="overflow-x-auto rounded-2xl ">
@@ -121,20 +121,20 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
                 {t("時段")}
               </th>
 
-              {fields.map((field, idx) => {
-                const isSelected = fieldChecked?.idx === idx;
+              {venues.map((venue, idx) => {
+                const isSelected = venueChecked?.idx === idx;
 
                 return (
                   <th
-                    id={`field-column-${idx}`}
-                    key={field.id ?? idx}
-                    onClick={() => handleFieldClick(field.id)}
+                    id={`venue-column-${idx}`}
+                    key={venue.id ?? idx}
+                    onClick={() => handleVenueClick(venue.id)}
                     className="px-4 py-2 border whitespace-nowrap cursor-pointer border-gray-300 bg-blue-100"
                   >
                     <div
                       className={`${isSelected ? "bg-blue-800" : "bg-blue-400"} text-white text-xl px-4 py-1 rounded-full transition-transform hover:scale-110 shadow-md inline-block`}
                     >
-                      {field.name}
+                      {venue.name}
                     </div>
                   </th>
                 );
@@ -156,19 +156,19 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
                   </td>
 
                   {/* 每個場地一格 */}
-                  {fields.map((field, colIdx) => {
-                    const resources = Array.isArray(field.resources) ? field.resources : [];
+                  {venues.map((venue, colIdx) => {
+                    const resources = Array.isArray(venue.resources) ? venue.resources : [];
                     const count = resources.length;
 
                     return (
-                      <td key={field.id ?? colIdx} className="px-3 py-3 border border-gray-300">
+                      <td key={venue.id ?? colIdx} className="px-3 py-3 border border-gray-300">
                         <div className="flex items-center justify-center gap-2">
                           {Array.from({ length: count }, (_, i) => (
                             <button
                               key={i}
                               type="button"
-                              onClick={() => handleSelectSlot({ fieldIdx: colIdx, resourceIdx: i, hour: h, date: baseDate })}
-                              className={`${selectedSlots?.fieldIdx === colIdx &&
+                              onClick={() => handleSelectSlot({ venueIdx: colIdx, resourceIdx: i, hour: h, date: baseDate })}
+                              className={`${selectedSlots?.venueIdx === colIdx &&
                                 selectedSlots?.resourceIdx === i &&
                                 Array.isArray(selectedSlots?.hours) &&
                                 selectedSlots.hours.includes(h)
@@ -203,7 +203,7 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
           <thead>
             <tr>
               <th className="sticky text-lg left-0 z-30 px-4 py-2 border whitespace-nowrap border-gray-300 bg-blue-100">
-                {fieldChecked ? fields[fieldChecked.idx].name : t("場地")}
+                {venueChecked ? venues[venueChecked.idx].name : t("場地")}
               </th>
 
               {sevenDays.map((day, idx) => {
@@ -225,7 +225,7 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
           </thead>
 
           <tbody>
-            {!fieldChecked ? (
+            {!venueChecked ? (
               <tr>
                 <td
                   colSpan={sevenDays.length + 1}
@@ -252,20 +252,20 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
                       <td key={colIdx} className="px-3 py-3 border border-gray-300">
                         <div className="flex items-center justify-center gap-2">
                           {Array.from(
-                            { length: fields[fieldChecked.idx].resources.length },
+                            { length: venues[venueChecked.idx].resources.length },
                             (_, i) => (
                               <button
                                 key={i}
                                 type="button"
                                 onClick={() =>
                                   handleSelectSlot({
-                                    fieldIdx: fieldChecked.idx,
+                                    venueIdx: venueChecked.idx,
                                     resourceIdx: i,
                                     hour: h,
                                     date: day,
                                   })
                                 }
-                                className={`${selectedSlots?.fieldIdx === fieldChecked.idx &&
+                                className={`${selectedSlots?.venueIdx === venueChecked.idx &&
                                     selectedSlots?.resourceIdx === i &&
                                     selectedSlots?.date === day.toISOString().slice(0, 10) &&
                                     Array.isArray(selectedSlots?.hours) &&
@@ -319,7 +319,7 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
               return translate("你已選擇：{value0} - {value1}", { value0: formatDateTime(startHour, { input: "hour" }).time, value1: formatDateTime(endHour, { input: "hour" }).time });
             })()}
             <br />
-            {translate("場地：{value0} / 第 {value1} 面", { value0: fields[selectedSlots.fieldIdx].name, value1: selectedSlots.resourceIdx + 1 })}
+            {translate("場地：{value0} / 第 {value1} 面", { value0: venues[selectedSlots.venueIdx].name, value1: selectedSlots.resourceIdx + 1 })}
             <br />
             {translate("總金額：NT$ {value0}", { value0: getSelectedTotalPrice() })}
           </div>
@@ -331,12 +331,12 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
               const startHour = Math.min(...selectedSlots.hours);
               const endHour = Math.max(...selectedSlots.hours) + 1;
 
-              console.log(fields[selectedSlots.fieldIdx].resources[selectedSlots.resourceIdx].id);
+              console.log(venues[selectedSlots.venueIdx].resources[selectedSlots.resourceIdx].id);
               navigate(`/external/pay`, {
                 state: {
-                  fieldName: fields[selectedSlots.fieldIdx].name,
-                  fieldIdx: selectedSlots.fieldIdx,
-                  resourceIdx: fields[selectedSlots.fieldIdx].resources[selectedSlots.resourceIdx].id,
+                  venueName: venues[selectedSlots.venueIdx].name,
+                  venueIdx: selectedSlots.venueIdx,
+                  resourceIdx: venues[selectedSlots.venueIdx].resources[selectedSlots.resourceIdx].id,
                   date: formatDateTime(selectedSlots.date || new Date()).numericDate,
                   timeRange: `${formatDateTime(startHour, { input: "hour" }).time} - ${formatDateTime(endHour, { input: "hour" }).time}`,
                   hours: selectedSlots.hours.length,
@@ -355,4 +355,4 @@ function SelectFieldSection({ fields, fieldChecked = null, selectedDate, default
   );
 }
 
-export default SelectFieldSection;
+export default SelectVenueSection;
