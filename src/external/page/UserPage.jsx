@@ -1,6 +1,5 @@
 import { useTranslation, translate } from "../../locale/i18n";
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
 import Navbar from "../components/navbar";
@@ -85,11 +84,8 @@ function SetPasswordDialog({ existingEmail, onSubmit, onCancel }) {
 
 export function UserPage() {
   const t = useTranslation();
-    const location = useLocation();
-    const navigate = useNavigate();
-    const completingLineProfile = location.state?.completeLineProfile === true;
     const [user, setUser] = useState(null);
-    const [isEditing, setIsEditing] = useState(completingLineProfile);
+    const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isUnlinkingLine, setIsUnlinkingLine] = useState(false);
     const [lineUnlinked, setLineUnlinked] = useState(false);
@@ -236,11 +232,11 @@ export function UserPage() {
     const handleSaveProfile = async (event) => {
         event.preventDefault();
 
-        if (!formData.display_name.trim() || !formData.gender || !formData.birth_date) {
-            errorPopup(t("資料不完整"), t("請填寫顯示名稱、性別與出生日期。"));
+        if (!formData.display_name.trim() || !formData.gender) {
+            errorPopup(t("資料不完整"), t("請填寫顯示名稱與性別。"));
             return;
         }
-        if (!isValidBirthDate(formData.birth_date)) {
+        if (formData.birth_date && !isValidBirthDate(formData.birth_date)) {
             errorPopup(t("出生日期錯誤"), t("請選擇有效且不晚於今天的出生日期。"));
             return;
         }
@@ -253,8 +249,8 @@ export function UserPage() {
         const editableData = {
             display_name: formData.display_name.trim(),
             gender: formData.gender,
-            birth_date: formData.birth_date,
         };
+        if (formData.birth_date) editableData.birth_date = formData.birth_date;
         const phone = normalizePhoneNumber(formData.phone);
         if (phone || savedProfile.phone) editableData.phone = phone;
         const profileChanged = Object.keys(editableData).some((key) => editableData[key] !== savedProfile[key]);
@@ -275,7 +271,7 @@ export function UserPage() {
                 setUser((current) => ({
                     ...current,
                     ...editableData,
-                    age: calculateAge(editableData.birth_date),
+                    age: calculateAge(editableData.birth_date || current.birth_date),
                     ...updatedUser,
                 }));
                 profileSaved = true;
@@ -287,10 +283,6 @@ export function UserPage() {
                 setLevelStatus("ready");
             }
             setIsEditing(false);
-            if (completingLineProfile) {
-                navigate("/external/group", { replace: true });
-                return;
-            }
             if (profileChanged || levelChanged) {
                 successPopup(t("儲存成功"), profileChanged && levelChanged
                     ? t("個人資料與程度已更新。")
@@ -333,8 +325,7 @@ export function UserPage() {
             <Navbar />
             <main className="mx-auto w-[92%] max-w-4xl pt-8 sm:pt-10">
                 <div className="mb-5">
-                    <h1 className="text-3xl font-bold text-gray-900">{t(completingLineProfile ? "完成帳號設定" : "個人檔案")}</h1>
-                    {completingLineProfile && <p className="mt-2 text-sm text-slate-600">{t("請補上顯示名稱、性別與出生日期；電話可以留空。")}</p>}
+                    <h1 className="text-3xl font-bold text-gray-900">{t("個人檔案")}</h1>
                 </div>
 
                 <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
@@ -403,7 +394,7 @@ export function UserPage() {
                                         </select>
                                     </label>
                                     <div>
-                                        <label htmlFor="profile-birth-date" className="block text-sm font-semibold text-slate-700">{t("出生日期")}</label>
+                                        <label htmlFor="profile-birth-date" className="block text-sm font-semibold text-slate-700">{t("出生日期")} <span className="font-normal text-slate-500">{t("（選填）")}</span></label>
                                         <Calendar
                                             buttonId="profile-birth-date"
                                             placeholder={t("選擇出生日期")}
@@ -436,8 +427,8 @@ export function UserPage() {
                                 {!levelOptionsError && levelStatus !== "loading" && levelOptions.length === 0 && sportId && <p className="text-sm text-slate-500">{t("目前沒有可選的程度。")}</p>}
                                 <p className="text-sm text-slate-500">{t("登入信箱可在首次設定密碼時補上；username、頭像與組織資料無法在此修改。")}</p>
                                 <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
-                                    {!completingLineProfile && <button type="button" onClick={handleCancelEdit} disabled={isSaving} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">{t("取消")}</button>}
-                                    <button type="submit" disabled={isSaving} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? t("儲存中...") : t(completingLineProfile ? "完成帳號設定" : "儲存變更")}</button>
+                                    <button type="button" onClick={handleCancelEdit} disabled={isSaving} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">{t("取消")}</button>
+                                    <button type="submit" disabled={isSaving} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? t("儲存中...") : t("儲存變更")}</button>
                                 </div>
                             </form>
                         ) : (

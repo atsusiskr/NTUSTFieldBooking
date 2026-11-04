@@ -173,6 +173,11 @@
     color: black;
 }
 
+.navbar-center li a.is-active {
+    color: #0f172a;
+    font-weight: 700;
+}
+
 .nav-notification-link {
     display: inline-flex !important;
     align-items: center;
@@ -225,6 +230,12 @@
 
 .navbar-center li:hover::after {
     width: 100%;
+}
+
+.navbar-center li.is-active::after {
+    width: 100%;
+    height: 3px;
+    background-color: #2563eb;
 }
 
 .icon-container {
@@ -291,6 +302,12 @@
 .dropdown-content a:hover {
     background-color: #eff6ff;
     color: #2563eb;
+}
+
+.dropdown-links a.is-active {
+    background-color: #eff6ff;
+    color: #0f172a;
+    font-weight: 700;
 }
 
 .dropdown:hover .dropdown-content {

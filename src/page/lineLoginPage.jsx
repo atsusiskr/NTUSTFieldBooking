@@ -1,14 +1,12 @@
 import { useTranslation } from "../locale/i18n";
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import liff from "@line/liff";
 import Loading from "../components/loading";
 import { loginWithLineService } from "../service/authService";
 import { consumeLineTransaction, getLineRedirectUri, startLineAuthorization } from "../service/lineAuthorization";
 import { describeRequestError } from "../utils/requestError";
 import { useSportStore } from "../store/sportStore";
-import { getUserProfile } from "../service/userService";
-import LineProfilePage from "./lineProfilePage";
 
 export function LineAuthorizationPage() {
   const t = useTranslation();
@@ -51,22 +49,9 @@ export function LineAuthorizationPage() {
       }
 
       const { redirectUri, codeVerifier, nonce } = consumeLineTransaction(returnedState);
-      const result = await loginWithLineService({ code, redirectUri, codeVerifier, nonce });
+      await loginWithLineService({ code, redirectUri, codeVerifier, nonce });
       if (!sportId) setSportId("badminton");
-      let needsProfile = result.is_new_user === true;
-      if (!needsProfile) {
-        try {
-          const profile = await getUserProfile();
-          needsProfile = !profile?.gender || !profile?.birth_date;
-        } catch {
-          // Verify profile completion on the form page before entering the app.
-          needsProfile = true;
-        }
-      }
-      navigate(needsProfile ? "/line-login" : "/external/group", {
-        replace: true,
-        state: needsProfile ? { completeLineProfile: true } : null,
-      });
+      navigate("/external/group", { replace: true });
     };
 
     completeLogin().catch((reason) => {
@@ -106,11 +91,4 @@ export function LineAuthorizationPage() {
   );
 }
 
-function LineLoginPage() {
-  const location = useLocation();
-  return location.state?.completeLineProfile === true
-    ? <LineProfilePage />
-    : <LineAuthorizationPage />;
-}
-
-export default LineLoginPage;
+export default LineAuthorizationPage;

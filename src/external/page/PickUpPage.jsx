@@ -8,7 +8,7 @@ import PickUpFilterSection from "../components/pickUp/pickUpFilterSection";
 import { formatDateTime } from "../../utils/dateTimeFormat";
 import { errorPopup, successPopup } from "../../components/pop-up";
 import PickUpDetailPopUp from "../components/pickUp/pickUpDetailPopUp";
-import SkillLevelPrompt from "../components/pickUp/SkillLevelPrompt";
+import ProfileSetupPrompt from "../components/pickUp/ProfileSetupPrompt";
 import JoinGroupDialog from "../components/pickUp/JoinGroupDialog";
 import CreatePickUpDialog from "../components/pickUp/CreatePickUpDialog";
 import { isGroupExpired, isRegistrationClosed } from "../utils/pickUpTiming";
@@ -19,6 +19,7 @@ import { facilityMap, functionIconMap, InfoIconMap, sportIconMap } from "../../c
 import { statusMap, getStatusLabel } from "../../constant/statusMap";
 import { createPickUpLoadContext, pickUpService } from "../../service/pickUpService";
 import { skillLevelService } from "../../service/skillLevelService";
+import { getUserProfile, updateUserProfile } from "../../service/userService";
 import { useSportStore } from "../../store/sportStore";
 import { describeRequestError } from "../../utils/requestError";
 
@@ -55,10 +56,13 @@ function PickUpPageContent({ sportTypeId }) {
     const [isDetailModalClosing, setIsDetailModalClosing] = useState(false);
     const [levels, setLevels] = useState([]);
     const [myLevelStatus, setMyLevelStatus] = useState("checking");
-    const [levelDialogDismissed, setLevelDialogDismissed] = useState(false);
+    const [genderStatus, setGenderStatus] = useState("checking");
+    const [profileRetry, setProfileRetry] = useState(0);
+    const [setupDialogDismissed, setSetupDialogDismissed] = useState(false);
     const [selectedMyLevel, setSelectedMyLevel] = useState("");
-    const [savingMyLevel, setSavingMyLevel] = useState(false);
-    const [myLevelSaveError, setMyLevelSaveError] = useState("");
+    const [selectedGender, setSelectedGender] = useState("");
+    const [savingSetup, setSavingSetup] = useState(false);
+    const [setupSaveError, setSetupSaveError] = useState("");
     const [pendingJoinRequest, setPendingJoinRequest] = useState(null);
     const [joinDialogGroup, setJoinDialogGroup] = useState(null);
     const [joiningGroupId, setJoiningGroupId] = useState(null);
@@ -97,12 +101,14 @@ function PickUpPageContent({ sportTypeId }) {
     useEffect(() => {
         let cancelled = false;
         setMyLevelStatus("checking");
-        setLevelDialogDismissed(false);
+        setSetupDialogDismissed(false);
         setSelectedMyLevel("");
-        setMyLevelSaveError("");
+        setSetupSaveError("");
 
-        skillLevelService.getMyLevel(sportTypeId).then(() => {
-            if (!cancelled) setMyLevelStatus("ready");
+        skillLevelService.getMyLevel(sportTypeId).then((data) => {
+            if (cancelled) return;
+            const level = data?.skill_level?.level ?? data?.skill_level ?? data?.level;
+            setMyLevelStatus(level === null || level === undefined || level === "" ? "missing" : "ready");
         }).catch((error) => {
             if (cancelled) return;
             if (isMissingSkillLevelError(error)) {
@@ -117,6 +123,19 @@ function PickUpPageContent({ sportTypeId }) {
 
         return () => { cancelled = true; };
     }, [sportTypeId]);
+
+    useEffect(() => {
+        let cancelled = false;
+        setGenderStatus("checking");
+        getUserProfile().then((profile) => {
+            if (!cancelled) setGenderStatus(["male", "female", "other"].includes(profile?.gender) ? "ready" : "missing");
+        }).catch((error) => {
+            if (cancelled) return;
+            console.error("取得個人性別失敗:", error);
+            setGenderStatus("error");
+        });
+        return () => { cancelled = true; };
+    }, [profileRetry]);
 
     useEffect(() => {
         let cancelled = false;
@@ -226,9 +245,9 @@ function PickUpPageContent({ sportTypeId }) {
     const promptForMyLevel = (groupId, payload) => {
         setPendingJoinRequest({ groupId, payload });
         setSelectedMyLevel("");
-        setMyLevelSaveError("");
+        setSetupSaveError("");
         setMyLevelStatus("missing");
-        setLevelDialogDismissed(false);
+        setSetupDialogDismissed(false);
     };
 
     const handleJoinGroup = async (groupId, requestPayload = null, skipLevelCheck = false, savedLevel = null) => {
@@ -315,19 +334,31 @@ function PickUpPageContent({ sportTypeId }) {
         }
     };
 
-    const handleSaveMyLevel = async (event) => {
+    const handleSaveSetup = async (event) => {
         event.preventDefault();
+        const needsGender = genderStatus === "missing";
+        const needsLevel = myLevelStatus === "missing";
+        if (needsGender && !["male", "female", "other"].includes(selectedGender)) {
+            setSetupSaveError(t("請先選擇性別。"));
+            return;
+        }
         const level = Number(selectedMyLevel);
-        if (!levels.some((item) => item.level === level)) {
-            setMyLevelSaveError(t("請先選擇有效的程度。"));
+        if (needsLevel && !levels.some((item) => item.level === level)) {
+            setSetupSaveError(t("請先選擇有效的程度。"));
             return;
         }
 
-        setSavingMyLevel(true);
-        setMyLevelSaveError("");
+        setSavingSetup(true);
+        setSetupSaveError("");
         try {
-            await skillLevelService.setMyLevel(sportTypeId, level);
-            setMyLevelStatus("ready");
+            if (needsGender) {
+                await updateUserProfile({ gender: selectedGender });
+                setGenderStatus("ready");
+            }
+            if (needsLevel) {
+                await skillLevelService.setMyLevel(sportTypeId, level);
+                setMyLevelStatus("ready");
+            }
             const request = pendingJoinRequest;
             setPendingJoinRequest(null);
             if (request?.groupId) {
@@ -338,12 +369,14 @@ function PickUpPageContent({ sportTypeId }) {
                     setIsDetailModalClosing(false);
                 }
             } else {
-                successPopup(t("設定成功"), t("你的運動程度已儲存。"));
+                successPopup(t("設定成功"), needsGender && needsLevel
+                    ? t("你的性別與運動程度已儲存。")
+                    : needsGender ? t("你的性別已儲存。") : t("你的運動程度已儲存。"));
             }
         } catch (error) {
-            setMyLevelSaveError(describeRequestError(error).message);
+            setSetupSaveError(describeRequestError(error).message);
         } finally {
-            setSavingMyLevel(false);
+            setSavingSetup(false);
         }
     };
 
@@ -396,6 +429,8 @@ function PickUpPageContent({ sportTypeId }) {
         String(order.sport?.id || order.pickupGroup?.sport?.id || order.pickupGroup?.sport_id || "") === String(sportTypeId));
     const showPageControls = pageInfo.total === null
         ? page > 1 || pageInfo.hasNext : pageInfo.total > 0;
+    const needsLevel = myLevelStatus === "missing";
+    const needsGender = genderStatus === "missing";
 
     return (
         <div className="app-page text-slate-900">
@@ -431,23 +466,31 @@ function PickUpPageContent({ sportTypeId }) {
             </section>}
             {myOrdersError && <p role="alert" className="mx-auto mb-4 w-[95%] max-w-7xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{t("近期已報名活動載入失敗：")}{myOrdersError}<button type="button" onClick={() => setRefreshTrigger((value) => value + 1)} className="ml-2 font-semibold underline">{t("重新載入")}</button></p>}
 
-            {myLevelStatus === "missing" && levelDialogDismissed && (
+            {genderStatus === "error" && <div className="mx-auto mb-4 flex w-[95%] max-w-7xl items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
+                <span>{t("無法取得個人資料，請重新載入。")}</span>
+                <button type="button" onClick={() => setProfileRetry((previous) => previous + 1)} className="shrink-0 font-bold underline">{t("重新載入")}</button>
+            </div>}
+            {(needsLevel || needsGender) && setupDialogDismissed && (
                 <div className="mx-auto mb-4 flex w-[95%] max-w-7xl items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900" role="status">
-                    <span>{t("你還沒有設定這個球類的程度。")}</span>
-                    <button type="button" onClick={() => setLevelDialogDismissed(false)} className="shrink-0 font-bold text-blue-700 underline">{t("設定程度")}</button>
+                    <span>{needsLevel && needsGender ? t("你還沒有設定性別與這個球類的程度。") : needsGender ? t("你還沒有設定性別。") : t("你還沒有設定這個球類的程度。")}</span>
+                    <button type="button" onClick={() => setSetupDialogDismissed(false)} className="shrink-0 font-bold text-blue-700 underline">{needsGender ? t("設定資料") : t("設定程度")}</button>
                 </div>
             )}
-            {myLevelStatus === "missing" && !levelDialogDismissed && !loading && !levelsLoading && (
-                <SkillLevelPrompt
+            {(needsLevel || needsGender) && !setupDialogDismissed && !loading && !levelsLoading && myLevelStatus !== "checking" && genderStatus !== "checking" && genderStatus !== "error" && (
+                <ProfileSetupPrompt
+                    showLevel={needsLevel}
+                    showGender={needsGender}
                     levels={levels}
                     levelsError={levelsError}
                     value={selectedMyLevel}
-                    onChange={(value) => { setSelectedMyLevel(value); setMyLevelSaveError(""); }}
-                    onSave={handleSaveMyLevel}
-                    onClose={() => { setPendingJoinRequest(null); setLevelDialogDismissed(true); }}
+                    onChange={(value) => { setSelectedMyLevel(value); setSetupSaveError(""); }}
+                    gender={selectedGender}
+                    onGenderChange={(value) => { setSelectedGender(value); setSetupSaveError(""); }}
+                    onSave={handleSaveSetup}
+                    onClose={() => { setPendingJoinRequest(null); setSetupDialogDismissed(true); }}
                     onRetry={() => setLevelsRetry((previous) => previous + 1)}
-                    saving={savingMyLevel}
-                    saveError={myLevelSaveError}
+                    saving={savingSetup}
+                    saveError={setupSaveError}
                 />
             )}
             <div className="mx-auto mb-8 w-[95%] max-w-7xl lg:flex lg:items-start lg:gap-6">
