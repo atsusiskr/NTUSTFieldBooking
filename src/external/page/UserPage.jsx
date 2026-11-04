@@ -337,9 +337,9 @@ export function UserPage() {
                     {completingLineProfile && <p className="mt-2 text-sm text-slate-600">{t("請補上顯示名稱、性別與出生日期；電話可以留空。")}</p>}
                 </div>
 
-                <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-                        <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full bg-blue-100 text-2xl font-bold text-blue-700">
+                <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+                    <div className="flex items-center gap-4 sm:gap-5">
+                        <div className="relative grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full bg-blue-100 text-2xl font-bold text-blue-700 sm:h-20 sm:w-20">
                             {displayName.charAt(0)}
                             {avatar && (
                                 <img
@@ -351,7 +351,7 @@ export function UserPage() {
                             )}
                         </div>
                         <div className="min-w-0 flex-1">
-                            <h2 className="truncate text-2xl font-bold text-slate-900">{displayName}</h2>
+                            <h2 className="truncate text-xl font-bold text-slate-900 sm:text-2xl">{displayName}</h2>
                             <p className="mt-1 text-sm text-slate-500">@{user.username || t("未設定 username")}</p>
                             <div className="mt-3 flex flex-wrap gap-2">
                                 {user.is_pickup_host && (
