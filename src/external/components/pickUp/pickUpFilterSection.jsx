@@ -2,6 +2,7 @@ import { useTranslation } from "../../../locale/i18n";
 import Calendar from "../../../components/dayPicker/dayPick";
 import { functionIconMap } from "../../../constant/IconMap";
 import { DoubleSlide } from "../../../components/rangeSlide";
+import { Search } from "lucide-react";
 
 const sortOptions = [
     { value: "distance", label: "距離近" },
@@ -9,7 +10,8 @@ const sortOptions = [
 ];
 
 function FilterContent({ activeFilter, onFilterChange, selectedDate, onDatePicked, onClearDate, isMobile, onClose,
-    levels, levelRange, onLevelChange, levelsLoading, levelsError, onRetryLevels }) {
+    levels, levelRange, onLevelChange, levelsLoading, levelsError, onRetryLevels,
+    searchDraft, onSearchDraftChange, onSearchSubmit, onClearSearch }) {
   const t = useTranslation();
     const handleDatePicked = (day) => {
         onDatePicked(day.date);
@@ -37,6 +39,33 @@ function FilterContent({ activeFilter, onFilterChange, selectedDate, onDatePicke
             </div>
 
             <div className="space-y-5">
+                <form onSubmit={(event) => { event.preventDefault(); onSearchSubmit(); if (isMobile) onClose(); }} className="space-y-2">
+                    <label htmlFor={isMobile ? "pickup-search-mobile" : "pickup-search-desktop"} className="text-xs font-bold tracking-wider text-gray-500">
+                        {t("搜尋團名或團主")}
+                    </label>
+                    <div className="flex gap-2">
+                        <input
+                            id={isMobile ? "pickup-search-mobile" : "pickup-search-desktop"}
+                            type="search"
+                            value={searchDraft}
+                            onChange={(event) => onSearchDraftChange(event.target.value)}
+                            maxLength={100}
+                            placeholder={t("輸入團名或團主名稱")}
+                            className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        />
+                        <button type="submit" aria-label={t("搜尋球團")} className="grid min-h-10 w-10 shrink-0 place-items-center rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                            <Search size={18} aria-hidden="true" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onClearSearch}
+                            className="shrink-0 rounded-lg border border-red-100 bg-white px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                        >
+                            {t("清除")}
+                        </button>
+                    </div>
+                </form>
+
                 <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold tracking-wider text-gray-500">{t("排序方式")}</label>
                     <div className="flex w-full rounded-lg bg-gray-100 p-1">
@@ -91,14 +120,17 @@ function FilterContent({ activeFilter, onFilterChange, selectedDate, onDatePicke
 }
 
 export default function PickUpFilterSection({ activeFilter, onFilterChange, selectedDate, onDatePicked, onClearDate,
-    levels, levelRange, onLevelChange, levelsLoading, levelsError, onRetryLevels, isMobileOpen, onMobileClose }) {
+    levels, levelRange, onLevelChange, levelsLoading, levelsError, onRetryLevels, isMobileOpen, onMobileClose,
+    searchDraft, onSearchDraftChange, onSearchSubmit, onClearSearch }) {
     const levelProps = { levels, levelRange, onLevelChange, levelsLoading, levelsError, onRetryLevels };
+    const searchProps = { searchDraft, onSearchDraftChange, onSearchSubmit, onClearSearch };
 
     return (
         <>
             <aside className="sticky top-4 hidden w-72 shrink-0 lg:block z-10">
                 <FilterContent
                     {...levelProps}
+                    {...searchProps}
                     activeFilter={activeFilter}
                     onFilterChange={onFilterChange}
                     selectedDate={selectedDate}
@@ -118,6 +150,7 @@ export default function PickUpFilterSection({ activeFilter, onFilterChange, sele
                     <div className={isMobileOpen ? "overflow-visible" : "overflow-hidden"}>
                         <FilterContent
                             {...levelProps}
+                            {...searchProps}
                             activeFilter={activeFilter}
                             onFilterChange={onFilterChange}
                             selectedDate={selectedDate}

@@ -97,7 +97,7 @@ export default function OrderPage({ historyOnly = false }) {
   const t = useTranslation();
     const [orders, setOrders] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [loadErrors, setLoadErrors] = useState({});
     const [activeTab, setActiveTab] = useState(historyOnly ? "history" : "pickup");
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [selectedCancelOrder, setSelectedCancelOrder] = useState(null);
@@ -115,16 +115,24 @@ export default function OrderPage({ historyOnly = false }) {
     useEffect(() => {
         setLoading(true);
         const fetchOrder = async () => {
-            const userId = JSON.parse(localStorage.getItem("userId"));
-            const query = {
-                user_id: userId,
-            }
             try {
-                const bookingRes = await bookingService.getBookingList(query, true);
-                const pickUpRes = await pickUpService.getMyPickUpList(true);
-                setOrders({ booking: bookingRes, pickUp: pickUpRes });
+                let userId = null;
+                try { userId = JSON.parse(localStorage.getItem("userId")); } catch { /* 損壞的快取不應阻止載入訂單 */ }
+                const query = userId ? { user_id: userId } : {};
+                const [bookingResult, pickupResult] = await Promise.allSettled([
+                    bookingService.getBookingList(query, true),
+                    pickUpService.getMyPickUpList(true),
+                ]);
+                setOrders({
+                    booking: bookingResult.status === "fulfilled" ? bookingResult.value : { items: [] },
+                    pickUp: pickupResult.status === "fulfilled" ? pickupResult.value : [],
+                });
+                setLoadErrors({
+                    booking: bookingResult.status === "rejected" ? bookingResult.reason : null,
+                    pickup: pickupResult.status === "rejected" ? pickupResult.reason : null,
+                });
             } catch (err) {
-                setError(err);
+                setLoadErrors({ booking: err, pickup: err });
             } finally {
                 setLoading(false);
             }
@@ -133,6 +141,7 @@ export default function OrderPage({ historyOnly = false }) {
     }, [refreshTrigger]);
 
     const openCancelModal = (order) => {
+        if (activeTab === "pickup" && order.detailsUnavailable) return;
         if (activeTab === "pickup" && isPickupCancellationClosed(order, Date.now())) {
             setNow(Date.now());
             return;
@@ -249,7 +258,10 @@ export default function OrderPage({ historyOnly = false }) {
         <div className="app-page pb-12 text-slate-900">
             <Navbar />
             <Loading isLoading={loading} text={t("取得訂單資料中...")} />
-            {error && <p>{t("取得訂單資料失敗：")}{describeRequestError(error).message}</p>}
+            {(activeTab === "history" ? ["pickup", "booking"] : [activeTab]).map((kind) => loadErrors[kind] &&
+                <p key={kind} role="alert" className="mx-auto mb-3 w-[95%] max-w-3xl rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                    取得{kind === "pickup" ? "臨打團" : "場地"}訂單失敗：{describeRequestError(loadErrors[kind]).message}
+                </p>)}
             {!loading && orders &&
                 (
                     <div>
@@ -282,7 +294,7 @@ export default function OrderPage({ historyOnly = false }) {
                         </div>}
 
                         {/* Order List */}
-                        {visibleOrders.length === 0 && (
+                        {visibleOrders.length === 0 && !loadErrors[activeTab] && !(activeTab === "history" && (loadErrors.pickup || loadErrors.booking)) && (
                             <p className="mx-auto w-[95%] rounded-xl border border-gray-200 bg-white px-5 py-10 text-center text-gray-500 md:w-[50%]">
                                 {activeTab === "history" ? t("目前沒有歷史預約") : t("目前沒有進行中或即將開始的預約")}
                             </p>
@@ -291,6 +303,7 @@ export default function OrderPage({ historyOnly = false }) {
                             {visibleOrders.map((order) => {
                                 const directionsUrl = getDirectionsUrl(order.location);
                                 const isPickupOrder = activeTab === "pickup" || (activeTab === "history" && order.orderKind === "pickup");
+                                const canOpenPickUpDetail = isPickupOrder && Boolean(order.pickupGroup);
                                 const start = isPickupOrder ? formatDateTime(order.start_time) : formatBookingDateTime(order.start_time, order);
                                 const end = isPickupOrder ? formatDateTime(order.end_time) : formatBookingDateTime(order.end_time, order);
                                 const partyDetails = isPickupOrder ? getPickUpPartyDetails(order) : null;
@@ -299,22 +312,22 @@ export default function OrderPage({ historyOnly = false }) {
                                 return (
                                     <li
                                         key={`${order.orderKind || activeTab}-${order.id}`}
-                                        onClick={isPickupOrder ? () => openPickUpDetail(order) : undefined}
-                                        className={`w-[95%] md:w-[50%] mx-auto mb-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-colors ${isPickupOrder ? "cursor-pointer hover:border-blue-300 hover:bg-blue-50/50" : ""} ${order.status === "cancelled" ? "opacity-40" : ""}`}
+                                        onClick={canOpenPickUpDetail ? () => openPickUpDetail(order) : undefined}
+                                        className={`w-[95%] md:w-[50%] mx-auto mb-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-colors ${canOpenPickUpDetail ? "cursor-pointer hover:border-blue-300 hover:bg-blue-50/50" : ""} ${order.status === "cancelled" ? "opacity-40" : ""}`}
                                     >
 
                                     {/* 點擊臨打訂單摘要可查看所報名的活動 */}
                                     <div
-                                        role={isPickupOrder ? "button" : undefined}
-                                        tabIndex={isPickupOrder ? 0 : undefined}
-                                        aria-label={isPickupOrder ? translate("查看{value0}臨打團詳細資訊", { value0: order.title }) : undefined}
-                                        onKeyDown={isPickupOrder ? (event) => {
+                                        role={canOpenPickUpDetail ? "button" : undefined}
+                                        tabIndex={canOpenPickUpDetail ? 0 : undefined}
+                                        aria-label={canOpenPickUpDetail ? translate("查看{value0}臨打團詳細資訊", { value0: order.title }) : undefined}
+                                        onKeyDown={canOpenPickUpDetail ? (event) => {
                                             if (event.key === "Enter" || event.key === " ") {
                                                 event.preventDefault();
                                                 openPickUpDetail(order);
                                             }
                                         } : undefined}
-                                        className={isPickupOrder ? "cursor-pointer rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-blue-500" : ""}
+                                        className={canOpenPickUpDetail ? "cursor-pointer rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-blue-500" : ""}
                                     >
                                     <div className="flex justify-between items-start mb-3 gap-3">
                                         <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -343,10 +356,11 @@ export default function OrderPage({ historyOnly = false }) {
                                         <p>{t("時間：")}{start.time} - {end.time}</p>
                                         <p>{t("地點：")}{order.location?.name || t("未指定")}</p>
                                     </div>
-                                    {isPickupOrder && <p className="mb-3 text-sm font-semibold text-blue-600">{t("點擊查看臨打團詳細資訊 →")}</p>}
+                                    {canOpenPickUpDetail && <p className="mb-3 text-sm font-semibold text-blue-600">{t("點擊查看臨打團詳細資訊 →")}</p>}
                                     </div>
+                                    {order.detailsUnavailable && <p role="status" className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{t("活動資訊暫時無法取得，請稍後重新載入。")}</p>}
                                     {partyDetails && <PickUpPartyInfo details={partyDetails} />}
-                                    {activeTab === "pickup" && order.status === "confirmed" && (
+                                    {activeTab === "pickup" && !order.detailsUnavailable && order.status === "confirmed" && (
                                         <p className={`mt-3 rounded-lg px-3 py-2 text-sm ${pickupCancellationClosed
                                             ? "bg-amber-50 font-semibold text-amber-900"
                                             : "bg-blue-50 text-blue-800"}`}>
@@ -363,7 +377,7 @@ export default function OrderPage({ historyOnly = false }) {
                                                 <MapPinned size={16} aria-hidden="true" />{t("Google Maps 導航")}
                                             </a>
                                         )}
-                                        {activeTab !== "history" && !pickupCancellationClosed && !cancellingIds.has(order.id) && !["cancelled", "cancel_request", "cancelled_request"].includes(order.status) && !order._cancelRequested && (
+                                        {activeTab !== "history" && !order.detailsUnavailable && !pickupCancellationClosed && !cancellingIds.has(order.id) && !["cancelled", "cancel_request", "cancelled_request"].includes(order.status) && !order._cancelRequested && (
                                             <button
                                                 className="w-full sm:w-auto border border-red-500 text-red-600 bg-white hover:bg-red-50 text-sm font-semibold py-2 px-6 rounded-lg transition"
                                                 onClick={(event) => { event.stopPropagation(); openCancelModal(order); }}

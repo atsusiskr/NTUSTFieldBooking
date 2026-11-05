@@ -1,10 +1,14 @@
+import { useState } from "react";
+import { MessageCircle } from "lucide-react";
 import { useTranslation, translate } from "../../../locale/i18n";
 import { statusMap, getStatusLabel } from "../../../constant/statusMap";
 import { formatDateTime } from "../../../utils/dateTimeFormat";
 import { facilityMap, functionIconMap, InfoIconMap, sportIconMap } from "../../../constant/IconMap";
+import HostMessageDialog from "./HostMessageDialog";
 
 export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeDetailModal, isClosing, onContactHost, joining, registrationClosed = false, hideJoin = false }) {
-  const t = useTranslation();
+    const t = useTranslation();
+    const [showHostMessage, setShowHostMessage] = useState(false);
     const isFull = Number(selectedGroup.current_enrolled || 0) >= Number(selectedGroup.capacity || 0);
     const status = selectedGroup.enrolledStatus;
     const canJoin = status === null && !isFull;
@@ -156,14 +160,24 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
                             <p className="truncate font-semibold text-gray-900">{hostName}</p>
                             <p className="mt-0.5 truncate text-sm text-gray-500">@{hostUsername}</p>
                         </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setShowHostMessage(true)}
+                            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                        >
+                            <MessageCircle size={16} aria-hidden="true" />
+                            {t("傳訊息給團主")}
+                        </button>
                         <button
                             type="button"
                             disabled={!canContactHost}
                             title={canContactHost ? t("聯絡主揪") : t("主揪尚未提供聯絡方式")}
                             onClick={() => onContactHost(host)}
-                            className={`min-h-10 shrink-0 rounded-lg px-3 text-sm font-bold transition ${canContactHost
-                                ? "bg-blue-600 text-white hover:bg-blue-700"
-                                : "cursor-not-allowed bg-gray-100 text-gray-400"
+                            className={`min-h-10 rounded-lg border px-4 text-sm font-bold transition ${canContactHost
+                                ? "border-blue-200 text-blue-700 hover:bg-blue-50"
+                                : "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
                                 }`}
                         >
                             {t("聯絡主揪")}
@@ -232,6 +246,13 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
                             : getStatusLabel("default", t)}
                 </button>}
             </div>
+            {showHostMessage && (
+                <HostMessageDialog
+                    groupId={selectedGroup.id}
+                    groupTitle={selectedGroup.title}
+                    onClose={() => setShowHostMessage(false)}
+                />
+            )}
         </section>
     )
 }

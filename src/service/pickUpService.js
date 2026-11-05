@@ -5,6 +5,13 @@ import { useAuthStore } from "../store/authStore.js";
 
 let pendingOrdersRequest = null;
 
+const matchesPickUpKeyword = (group, keyword) => [
+  group.title,
+  group.host?.display_name,
+  group.host?.username,
+  group.host_name,
+].some((value) => String(value || "").toLocaleLowerCase().includes(keyword));
+
 const getRawMyPickUpOrders = () => {
   const token = useAuthStore.getState().token;
   if (pendingOrdersRequest?.token === token) return pendingOrdersRequest.promise;
@@ -39,6 +46,10 @@ export const createPickUpLoadContext = () => {
 };
 
 export const pickUpService = {
+  sendHostMessage: async (groupId, message) => {
+    const res = await api.post(`/pickup-groups/${encodeURIComponent(groupId)}/host-messages`, message);
+    return res.data;
+  },
   createPickUpGroup: async (payload) => {
     const res = await api.post("/pickup-groups", payload);
     return res.data;
@@ -50,7 +61,7 @@ export const pickUpService = {
   },
 
   // 取得臨打團清單
-  getPickUpList: async (params = {}, { myOrders, context = createPickUpLoadContext() } = {}) => {
+  getPickUpList: async (params = {}, { myOrders, context = createPickUpLoadContext(), searchKeyword = "" } = {}) => {
     const [res, orders] = await Promise.all([
       api.get("/pickup-groups", { params }),
       myOrders === undefined ? pickUpService.getMyPickUpList().catch(() => []) : Promise.resolve(myOrders).catch(() => []),
@@ -65,7 +76,7 @@ export const pickUpService = {
     const total = Number.isInteger(data.total) && data.total >= 0 ? data.total : null;
 
     // 建立一個映射，將我的訂單的 pickup_group_id 對應到其狀態
-    const enrolledStatusMap = orders.reduce((acc, order) => {
+    const enrolledStatusMap = (Array.isArray(orders) ? orders : []).reduce((acc, order) => {
       acc[order.pickup_group_id] = order.status;
       return acc;
     }, {});
@@ -74,37 +85,65 @@ export const pickUpService = {
     const pickupWithLocation = await Promise.all(
       pickups.map(async (pickup) => {
         const orderStatus = enrolledStatusMap[pickup.id];
-
+        let pickupInfo;
         try {
-          const pickupInfo = await context.getGroup(pickup.id);
-          const locationId = pickupInfo.location_id || pickup.location_id;
-          const locationInfo = locationId ? await context.getLocation(locationId) : null;
-          const facilities = typeof locationInfo?.facility === "string"
-            ? locationInfo.facility.split("_").filter(Boolean) : [];
-
-          return {
-            ...pickupInfo,
-            location: locationInfo,
-            facilities: facilities,
-            enrolledStatus: orderStatus || null,
-          };
+          pickupInfo = await context.getGroup(pickup.id);
+          if (!pickupInfo) throw new Error("臨打團詳情為空");
         } catch (error) {
-          console.error(`沒有抓到 ${pickup.id} 的location info:`, error);
+          console.error(`無法取得 ${pickup.id} 的臨打團詳情:`, error);
+          if (searchKeyword && !matchesPickUpKeyword(pickup, searchKeyword)) return null;
           return {
             ...pickup,
             location: null,
+            facilities: [],
             enrolledStatus: orderStatus || null,
+            detailsUnavailable: true,
           };
         }
+        if (searchKeyword && !matchesPickUpKeyword(pickupInfo, searchKeyword)
+          && !matchesPickUpKeyword(pickup, searchKeyword)) return null;
+        let locationInfo = pickupInfo.location || pickup.location || null;
+        const locationId = pickupInfo.location_id || pickup.location_id;
+        if (locationId) {
+          try { locationInfo = await context.getLocation(locationId) || locationInfo; }
+          catch (error) { console.error(`無法取得 ${locationId} 的場地資訊:`, error); }
+        }
+        return {
+          ...pickupInfo,
+          host: pickupInfo.host || pickup.host,
+          location: locationInfo,
+          facilities: typeof locationInfo?.facility === "string"
+            ? locationInfo.facility.split("_").filter(Boolean) : [],
+          enrolledStatus: orderStatus || null,
+        };
       }),
     );
     return {
-      items: pickupWithLocation,
+      items: searchKeyword ? pickupWithLocation.filter(Boolean) : pickupWithLocation,
       total,
       page,
       pageSize,
+      sourceCount: pickups.length,
       hasNext: total === null ? pickups.length === pageSize : page * pageSize < total,
     };
+  },
+
+  // 搜尋時走完後端分頁，再比對完整詳情中的團名與團主；避免只搜尋目前顯示的一頁。
+  searchPickUpGroups: async (params, keyword, options = {}) => {
+    const normalizedKeyword = String(keyword || "").trim().toLocaleLowerCase();
+    if (!normalizedKeyword) return [];
+
+    const matches = [];
+    let page = 1;
+    while (true) {
+      const result = await pickUpService.getPickUpList({ ...params, page, page_size: 20 }, {
+        ...options, searchKeyword: normalizedKeyword,
+      });
+      matches.push(...result.items);
+      if (!result.hasNext || result.sourceCount === 0 || result.page < page) break;
+      page += 1;
+    }
+    return matches;
   },
 
   // 報名臨打團
@@ -127,9 +166,19 @@ export const pickUpService = {
       ? rawOrders.filter((order) => order.status === "confirmed") : rawOrders;
     const ordersWithDetail = await Promise.all(
       relevantOrders.map(async (order) => {
-        const pickUpdetail = await requestContext.getGroup(order.pickup_group_id);
-        const locationInfo = pickUpdetail.location_id
-          ? await requestContext.getLocation(pickUpdetail.location_id) : null;
+        let pickUpdetail;
+        try {
+          pickUpdetail = await requestContext.getGroup(order.pickup_group_id);
+          if (!pickUpdetail) throw new Error("臨打團詳情為空");
+        } catch (error) {
+          console.error(`無法取得訂單 ${order.id} 的臨打團詳情:`, error);
+          return { ...order, title: order.title || translate("活動資訊暫時無法取得"), location: null, detailsUnavailable: true };
+        }
+        let locationInfo = pickUpdetail.location || order.location || null;
+        if (pickUpdetail.location_id) {
+          try { locationInfo = await requestContext.getLocation(pickUpdetail.location_id) || locationInfo; }
+          catch (error) { console.error(`無法取得 ${pickUpdetail.location_id} 的場地資訊:`, error); }
+        }
         return {
           ...order,
           location: locationInfo,

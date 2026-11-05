@@ -179,9 +179,19 @@
 }
 
 .nav-notification-link {
-    display: inline-flex !important;
     align-items: center;
     gap: 6px;
+}
+
+.navbar-center .nav-notification-link {
+    display: inline-flex;
+}
+
+.dropdown-links .nav-notification-link {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: space-between;
 }
 
 .notification-badge {

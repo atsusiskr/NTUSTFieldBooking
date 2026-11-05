@@ -57,7 +57,11 @@ function LoginPage() {
       const password = form.get("password");
 
       if (!email || !password) {
-        errorPopup(t("loginPage.errorMessage.error"), t("loginPage.errorMessage.invalidCredentials"));
+        errorPopup(t("loginPage.errorMessage.error"), t("請輸入電子郵件與密碼。"));
+        return;
+      }
+      if (!e.target.elements.email.checkValidity()) {
+        errorPopup(t("loginPage.errorMessage.error"), t("請輸入有效的電子郵件。"));
         return;
       }
 
@@ -109,7 +113,7 @@ function LoginPage() {
             </h1>
           </div>
 
-          <form className="space-y-5" onSubmit={(e) => handleLogin(e)}>
+          <form className="space-y-5" onSubmit={(e) => handleLogin(e)} noValidate>
             <div>
               <label className="block text-start text-gray-600 mb-1" htmlFor="email">{t("loginPage.input.label.email")}</label>
               <input

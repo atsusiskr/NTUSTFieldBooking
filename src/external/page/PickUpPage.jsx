@@ -19,6 +19,7 @@ import { facilityMap, functionIconMap, InfoIconMap, sportIconMap } from "../../c
 import { statusMap, getStatusLabel } from "../../constant/statusMap";
 import { createPickUpLoadContext, pickUpService } from "../../service/pickUpService";
 import { skillLevelService } from "../../service/skillLevelService";
+import { sportService } from "../../service/sportService";
 import { getUserProfile, updateUserProfile } from "../../service/userService";
 import { useSportStore } from "../../store/sportStore";
 import { describeRequestError } from "../../utils/requestError";
@@ -38,12 +39,18 @@ export default function PickUpPage() {
 
 function PickUpPageContent({ sportTypeId }) {
   const t = useTranslation();
+    const [sportName, setSportName] = useState("");
+    const [sportCode, setSportCode] = useState("");
     const [groups, setGroups] = useState([]);
     const [myPickUpOrders, setMyPickUpOrders] = useState([]);
     const [myOrdersError, setMyOrdersError] = useState(false);
     const [ordersLoad, setOrdersLoad] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState("distance");
+    const [searchDraft, setSearchDraft] = useState("");
+    const [searchTerm, setSearchTerm] = useState("");
+    const [searchRun, setSearchRun] = useState(0);
+    const searchCache = useRef(null);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
     const [pageInfo, setPageInfo] = useState({ total: 0, hasNext: false, pageSize: PAGE_SIZES[0] });
@@ -84,6 +91,18 @@ function PickUpPageContent({ sportTypeId }) {
     const hasPosition = Number.isFinite(latitude) && Number.isFinite(longitude);
     const minSkillLevel = appliedLevelRange?.[0];
     const maxSkillLevel = appliedLevelRange?.[1];
+    const selectedDateKey = selectedDate ? formatDateTime(selectedDate).date : "";
+
+    useEffect(() => {
+        let active = true;
+        sportService.getSportList().then((response) => {
+            if (!active) return;
+            const selectedSport = response?.items?.find((sport) => String(sport.id) === String(sportTypeId));
+            setSportName(selectedSport?.name || "");
+            setSportCode(selectedSport?.code || "");
+        }).catch(() => { if (active) { setSportName(""); setSportCode(""); } });
+        return () => { active = false; };
+    }, [sportTypeId]);
 
     useEffect(() => {
         const timer = window.setInterval(() => setNow(Date.now()), 30000);
@@ -181,17 +200,46 @@ function PickUpPageContent({ sportTypeId }) {
         let cancelled = false;
         const fetchGroups = async () => {
             setLoading(true);
+            let currentSearchCache = null;
             try {
-                const data = await pickUpService.getPickUpList({
+                const queryParams = {
                     sport_id: sportTypeId,
-                    page,
-                    page_size: pageSize,
                     latitude: hasPosition ? latitude : undefined,
                     longitude: hasPosition ? longitude : undefined,
                     sort_by: activeFilter === "distance" && !hasPosition ? "start_time" : activeFilter,
                     sort_order: "asc",
                     min_skill_level: minSkillLevel,
                     max_skill_level: maxSkillLevel,
+                };
+                if (searchTerm) {
+                    const key = JSON.stringify({ queryParams, searchTerm, refreshTrigger, searchRun });
+                    if (searchCache.current?.key !== key) {
+                        searchCache.current = {
+                            key,
+                            promise: pickUpService.searchPickUpGroups(queryParams, searchTerm, {
+                                myOrders: ordersLoad.myOrders,
+                                context: ordersLoad.context,
+                            }),
+                        };
+                    }
+                    currentSearchCache = searchCache.current;
+                    const matches = await currentSearchCache.promise;
+                    if (cancelled) return;
+                    const filtered = matches.filter((group) => !isGroupExpired(group, Date.now())
+                        && (!selectedDateKey || formatDateTime(group.start_time).date === selectedDateKey));
+                    const lastPage = Math.max(1, Math.ceil(filtered.length / pageSize));
+                    if (page > lastPage) {
+                        setPage(lastPage);
+                        return;
+                    }
+                    setGroups(filtered.slice((page - 1) * pageSize, page * pageSize));
+                    setPageInfo({ total: filtered.length, hasNext: page < lastPage, pageSize });
+                    return;
+                }
+                const data = await pickUpService.getPickUpList({
+                    ...queryParams,
+                    page,
+                    page_size: pageSize,
                 }, { myOrders: ordersLoad.myOrders, context: ordersLoad.context });
                 if (cancelled) return;
                 if (data.page !== page) {
@@ -210,6 +258,7 @@ function PickUpPageContent({ sportTypeId }) {
                 setGroups(data.items);
                 setPageInfo({ total: data.total, hasNext: data.hasNext, pageSize: data.pageSize });
             } catch (error) {
+                if (currentSearchCache && searchCache.current === currentSearchCache) searchCache.current = null;
                 if (cancelled) return;
                 console.error("Error fetching groups:", error);
                 setGroups([]);
@@ -223,7 +272,7 @@ function PickUpPageContent({ sportTypeId }) {
         }
         fetchGroups();
         return () => { cancelled = true; };
-    }, [sportTypeId, refreshTrigger, activeFilter, page, pageSize, hasPosition, latitude, longitude, minSkillLevel, maxSkillLevel, levelsLoading, ordersLoad]);
+    }, [sportTypeId, refreshTrigger, activeFilter, searchTerm, searchRun, selectedDateKey, page, pageSize, hasPosition, latitude, longitude, minSkillLevel, maxSkillLevel, levelsLoading, ordersLoad]);
 
     useEffect(() => {
         let cancelled = false;
@@ -381,12 +430,16 @@ function PickUpPageContent({ sportTypeId }) {
     };
 
     const openDetailModal = (group) => {
-        if (isGroupExpired(group)) return;
+        if (group.detailsUnavailable || isGroupExpired(group)) return;
         setIsDetailModalClosing(false);
         setSelectedGroup(group);
     };
 
     const requestJoin = (group) => {
+        if (group.detailsUnavailable) {
+            errorPopup(t("活動資訊暫時無法取得"), t("請稍後重新載入，再確認活動資料。"));
+            return;
+        }
         if (isRegistrationClosed(group) || isGroupExpired(group)) {
             errorPopup(t("活動報名已截止"), t("這個臨打團已超過報名截止時間，無法再報名。"));
             setNow(Date.now());
@@ -421,10 +474,18 @@ function PickUpPageContent({ sportTypeId }) {
         }
     };
 
+    const clearSearch = () => {
+        searchCache.current = null;
+        setSearchDraft("");
+        setSearchTerm("");
+        setSearchRun((run) => run + 1);
+        setPage(1);
+    };
+
     const pageCount = pageInfo.total === null
         ? null : Math.max(1, Math.ceil(pageInfo.total / pageInfo.pageSize));
     const visibleGroups = groups.filter((group) => !isGroupExpired(group, now)
-        && (!selectedDate || formatDateTime(group.start_time).date === formatDateTime(selectedDate).date));
+        && (!selectedDateKey || formatDateTime(group.start_time).date === selectedDateKey));
     const upcomingOrders = getUpcomingConfirmedOrders(myPickUpOrders, now).filter((order) =>
         String(order.sport?.id || order.pickupGroup?.sport?.id || order.pickupGroup?.sport_id || "") === String(sportTypeId));
     const showPageControls = pageInfo.total === null
@@ -478,6 +539,8 @@ function PickUpPageContent({ sportTypeId }) {
             )}
             {(needsLevel || needsGender) && !setupDialogDismissed && !loading && !levelsLoading && myLevelStatus !== "checking" && genderStatus !== "checking" && genderStatus !== "error" && (
                 <ProfileSetupPrompt
+                    sportName={sportName}
+                    sportCode={sportCode}
                     showLevel={needsLevel}
                     showGender={needsGender}
                     levels={levels}
@@ -505,18 +568,27 @@ function PickUpPageContent({ sportTypeId }) {
                     onRetryLevels={() => setLevelsRetry((previous) => previous + 1)}
                     activeFilter={activeFilter}
                     onFilterChange={(filter) => { setActiveFilter(filter); setPage(1); }}
+                    searchDraft={searchDraft}
+                    onSearchDraftChange={setSearchDraft}
+                    onSearchSubmit={() => { searchCache.current = null; setSearchTerm(searchDraft.trim()); setSearchRun((run) => run + 1); setPage(1); }}
+                    onClearSearch={clearSearch}
                     selectedDate={selectedDate}
                     onDatePicked={(date) => { setSelectedDate(date); setPage(1); }}
                     onClearDate={() => { setSelectedDate(null); setPage(1); }}
                 />
 
                 <main className="min-w-0 flex-1">
+                    {searchTerm && !loading && <div role="status" className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                        <span>{t("搜尋「{value0}」：共 {value1} 筆", { value0: searchTerm, value1: pageInfo.total })}</span>
+                        <button type="button" onClick={clearSearch} className="font-semibold text-blue-700 hover:underline">{t("清除搜尋")}</button>
+                    </div>}
                     <GroupNearbyMap groups={visibleGroups} onSelectGroup={openDetailModal} />
 
                     {/* {顯示臨打團清單} */}
                     {!loading && visibleGroups.length === 0 && (
                         <p className="text-center text-gray-500">
-                            {selectedDate ? t("此頁沒有符合所選日期的臨打團，請切換頁面查看。") : t("pickUpPage.groupEmpty")}
+                            {searchTerm ? t("沒有符合目前搜尋與篩選條件的臨打團。")
+                                : selectedDate ? t("此頁沒有符合所選日期的臨打團，請切換頁面查看。") : t("pickUpPage.groupEmpty")}
                         </p>
                     )}
                     <div>
@@ -527,6 +599,7 @@ function PickUpPageContent({ sportTypeId }) {
 
                             return (
                                 <div key={group.id} className="mx-auto mb-4 p-5 border border-gray-200 rounded-xl shadow-sm bg-white">
+                                    {group.detailsUnavailable && <p role="status" className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{t("活動資訊暫時無法取得，請稍後重新載入。")}</p>}
 
                                     {/* 標題與人數狀態 */}
                                     <div className="mb-3 flex items-start justify-between gap-3">
@@ -593,7 +666,7 @@ function PickUpPageContent({ sportTypeId }) {
                                     {/*費用程度標籤與報名按鈕 */}
                                     <div className="flex flex-col sm:flex-row justify-between items-center mt-4 pt-4 border-t border-gray-100 gap-4">
                                         <div className="flex items-center justify-between gap-2 w-full sm:w-auto">
-                                            <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-base font-medium">{t("pickUpPage.label.level")}: {group.min_skill_level.label || t("pickUpPage.label.levelNull")} {(Number(group.max_skill_level?.level) === Number(group.min_skill_level.level) || !group.max_skill_level?.label) ? "" : "- " + group.max_skill_level?.label}</span>
+                                            <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-base font-medium">{t("pickUpPage.label.level")}: {group.min_skill_level?.label || t("pickUpPage.label.levelNull")} {(Number(group.max_skill_level?.level) === Number(group.min_skill_level?.level) || !group.max_skill_level?.label || !group.min_skill_level?.label) ? "" : "- " + group.max_skill_level.label}</span>
                                             <span className={`px-3 py-1 my-[auto] rounded-md text-base font-bold border ${(group.fee !== 0) ? 'text-green-700 bg-green-50 border-green-200' : 'text-gray-700'}`} >$ {group.fee}</span>
 
                                         </div>
@@ -603,20 +676,23 @@ function PickUpPageContent({ sportTypeId }) {
                                             <button
                                                 type="button"
                                                 onClick={() => openDetailModal(group)}
-                                                className="min-h-11 w-2/5 rounded-lg border border-blue-300 px-4 py-2 font-semibold text-blue-600 transition hover:bg-blue-50 sm:w-auto"
+                                                disabled={group.detailsUnavailable}
+                                                className="min-h-11 w-2/5 rounded-lg border border-blue-300 px-4 py-2 font-semibold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                                             >
                                                 {t("顯示詳細")}
                                             </button>
 
                                             {/* 報名按鈕 */}
                                             <button
-                                                disabled={status !== null || isFull || joiningGroupId === group.id}
+                                                disabled={group.detailsUnavailable || status !== null || isFull || joiningGroupId === group.id}
                                                 onClick={() => requestJoin(group)}
                                                 className={`min-h-11 flex-1 rounded-lg px-6 py-2 font-bold tracking-wide text-white transition sm:flex-none
-                                                    ${(status !== null || isFull || joiningGroupId === group.id) ? "opacity-60 cursor-not-allowed" : "hover:opacity-90"}
+                                                    ${(group.detailsUnavailable || status !== null || isFull || joiningGroupId === group.id) ? "opacity-60 cursor-not-allowed" : "hover:opacity-90"}
                                                     ${registrationClosed && status === null && !isFull ? "bg-gray-500" : isFull && status === null ? statusMap.full.class : (statusMap[status]?.class || statusMap.default.class)}`}
                                             >
-                                                {status !== null
+                                                {group.detailsUnavailable
+                                                    ? t("資訊載入失敗")
+                                                    : status !== null
                                                     ? getStatusLabel(status, t)
                                                     : registrationClosed && !isFull
                                                         ? t("報名已截止")
