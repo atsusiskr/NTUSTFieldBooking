@@ -71,11 +71,26 @@
   animation: pickup-modal-panel-out 200ms ease-in both;
 }
 
+@keyframes manage-pickup-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.manage-pickup-backdrop-enter {
+  animation: pickup-modal-backdrop-in 180ms ease-out both;
+}
+
+.manage-pickup-sheet-enter {
+  animation: manage-pickup-sheet-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pickup-modal-backdrop-enter,
   .pickup-modal-backdrop-leave,
   .pickup-modal-panel-enter,
-  .pickup-modal-panel-leave {
+  .pickup-modal-panel-leave,
+  .manage-pickup-backdrop-enter,
+  .manage-pickup-sheet-enter {
     animation-duration: 1ms;
   }
 }

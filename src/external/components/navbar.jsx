@@ -30,7 +30,7 @@ function Navbar() {
   const currentType = sportId || (sportType && sportType !== "all" ? sportType : null) || "badminton";
   const selectedSport = findVenueSport(sports, currentType);
   const pathname = location.pathname;
-  const activeSection = pathname === "/external/pickup" ? "pickup"
+  const activeSection = pathname.startsWith("/external/pickup") ? "pickup"
     : pathname === "/external/venue" || pathname.startsWith("/external/venue/") || locationId || pathname === "/external/pay" ? "venue"
       : pathname === "/external/notification" ? "notification"
         : pathname.startsWith("/external/order") ? "orders" : null;
@@ -191,7 +191,8 @@ function Navbar() {
           </div>
           <div className="dropdown-links">
             <div className="navbar-sport-mobile"><SportSwitcher id="navbar-sport-mobile" sports={sports} selectedSport={selectedSport} onSelect={handleSportChange} restoreFocusOnSelect={false} /></div>
-            <Link className={isActive("pickup") ? "is-active" : undefined} aria-current={isActive("pickup") ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/pickup">{t("臨打")}</Link>
+            <Link className={pathname === "/external/pickup" ? "is-active" : undefined} aria-current={pathname === "/external/pickup" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/pickup">{t("臨打")}</Link>
+            <Link className={pathname === "/external/pickup/manage" ? "is-active" : undefined} aria-current={pathname === "/external/pickup/manage" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/pickup/manage">{t("管理臨打團")}</Link>
             <Link className={isActive("venue") ? "is-active" : undefined} aria-current={isActive("venue") ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to={`/external/venue/${currentType}`}>{t("場地")}</Link>
             <Link className={`nav-notification-link${isActive("notification") ? " is-active" : ""}`} aria-current={isActive("notification") ? "page" : undefined} aria-label={notificationLabel} onClick={() => setIsMenuOpen(false)} to="/external/notification">{t("通知")}{badge}</Link>
             <Link className={pathname === "/external/order" ? "is-active" : undefined} aria-current={pathname === "/external/order" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/order">{t("我的預約")}</Link>
