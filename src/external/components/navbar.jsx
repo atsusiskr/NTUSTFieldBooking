@@ -31,6 +31,7 @@ function Navbar() {
   const selectedSport = findVenueSport(sports, currentType);
   const pathname = location.pathname;
   const activeSection = pathname.startsWith("/external/pickup") ? "pickup"
+    : pathname === "/external/coach" ? "coach"
     : pathname === "/external/venue" || pathname.startsWith("/external/venue/") || locationId || pathname === "/external/pay" ? "venue"
       : pathname === "/external/notification" ? "notification"
         : pathname.startsWith("/external/order") ? "orders" : null;
@@ -147,6 +148,7 @@ function Navbar() {
       {/* central menu */}
       <ul className="navbar-center">
         <li className={isActive("pickup") ? "is-active" : undefined}><Link className={isActive("pickup") ? "is-active" : undefined} aria-current={isActive("pickup") ? "page" : undefined} to="/external/pickup">{t("臨打")}</Link></li>
+        <li className={isActive("coach") ? "is-active" : undefined}><Link className={isActive("coach") ? "is-active" : undefined} aria-current={isActive("coach") ? "page" : undefined} to="/external/coach">{t("教練團")}</Link></li>
         <li className={isActive("venue") ? "is-active" : undefined}><Link className={isActive("venue") ? "is-active" : undefined} aria-current={isActive("venue") ? "page" : undefined} to={`/external/venue/${currentType}`}>{t("場地")}</Link></li>
         <li className={isActive("notification") ? "is-active" : undefined}><Link className={`nav-notification-link${isActive("notification") ? " is-active" : ""}`} aria-current={isActive("notification") ? "page" : undefined} aria-label={notificationLabel} to="/external/notification">{t("通知")}{badge}</Link></li>
         <li className={isActive("orders") ? "is-active" : undefined}><Link className={isActive("orders") ? "is-active" : undefined} aria-current={pathname === "/external/order" ? "page" : undefined} to="/external/order">{t("我的預約")}</Link></li>
@@ -192,6 +194,7 @@ function Navbar() {
           <div className="dropdown-links">
             <div className="navbar-sport-mobile"><SportSwitcher id="navbar-sport-mobile" sports={sports} selectedSport={selectedSport} onSelect={handleSportChange} restoreFocusOnSelect={false} /></div>
             <Link className={pathname === "/external/pickup" ? "is-active" : undefined} aria-current={pathname === "/external/pickup" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/pickup">{t("臨打")}</Link>
+            <Link className={isActive("coach") ? "is-active" : undefined} aria-current={isActive("coach") ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/coach">{t("教練團")}</Link>
             <Link className={pathname === "/external/pickup/manage" ? "is-active" : undefined} aria-current={pathname === "/external/pickup/manage" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/pickup/manage">{t("管理臨打團")}</Link>
             <Link className={isActive("venue") ? "is-active" : undefined} aria-current={isActive("venue") ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to={`/external/venue/${currentType}`}>{t("場地")}</Link>
             <Link className={`nav-notification-link${isActive("notification") ? " is-active" : ""}`} aria-current={isActive("notification") ? "page" : undefined} aria-label={notificationLabel} onClick={() => setIsMenuOpen(false)} to="/external/notification">{t("通知")}{badge}</Link>

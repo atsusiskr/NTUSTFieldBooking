@@ -5,6 +5,7 @@ import PayPage from '../external/page/PayPage';
 import OrderPage from '../external/page/OrderPage';
 import HistoryOrderPage from '../external/page/HistoryOrderPage';
 import PickUpPage from '../external/page/PickUpPage';
+import CoachGroupPage from '../external/page/CoachGroupPage';
 import ManagePickUpPage from '../external/page/ManagePickUpPage';
 import { NotificationPage } from '../external/page/NotificationPage';
 import { UserPage } from '../external/page/UserPage';
@@ -22,6 +23,7 @@ function OutsideApp() {
       <Route path="/venue/:sportType" element={<VenuePage />} />
       <Route path="/:id/" element={<BookingPage />} />
       <Route path="/pickup" element={<PickUpPage />} />
+      <Route path="/coach" element={<CoachGroupPage />} />
       <Route path="/pickup/manage" element={<ManagePickUpPage />} />
       <Route path="/home" element={<Navigate to="/external/venue" replace />} />
       <Route path="/home/:sportType" element={<LegacyVenueRedirect />} />

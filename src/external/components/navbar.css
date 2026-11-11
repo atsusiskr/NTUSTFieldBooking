@@ -415,7 +415,7 @@
     color: #dc2626 !important;
 }
 
-@media (max-width: 970px) {
+@media (max-width: 1100px) {
     .navbar {
         flex-wrap: nowrap;
         padding: 10px 20px;

@@ -17,7 +17,7 @@ import { getUpcomingConfirmedOrders } from "../utils/orderDisplay";
 
 import { facilityMap, functionIconMap, InfoIconMap, sportIconMap } from "../../constant/IconMap";
 import { statusMap, getStatusLabel } from "../../constant/statusMap";
-import { createPickUpLoadContext, pickUpService } from "../../service/pickUpService";
+import { createPickUpLoadContext, isCoachGroup, pickUpService } from "../../service/pickUpService";
 import { skillLevelService } from "../../service/skillLevelService";
 import { sportService } from "../../service/sportService";
 import { getUserProfile, updateUserProfile } from "../../service/userService";
@@ -29,15 +29,15 @@ const isMissingSkillLevelError = (error) => error?.response?.status === 400
 const PAGE_SIZES = [10, 20, 50];
 
 
-export default function PickUpPage() {
+export default function PickUpPage({ coachOnly = false }) {
     const t = useTranslation();
     const sportTypeId = useSportStore((state) => state.sportId);
     if (!sportTypeId) return <div className="app-page text-slate-900"><Navbar /><Loading isLoading text={t("載入球類資料中...")} /></div>;
     // 切換球類時重設頁碼、程度篩選與報名狀態，舊請求由各 effect 清理。
-    return <PickUpPageContent key={sportTypeId} sportTypeId={sportTypeId} />;
+    return <PickUpPageContent key={`${sportTypeId}:${coachOnly}`} sportTypeId={sportTypeId} coachOnly={coachOnly} />;
 }
 
-function PickUpPageContent({ sportTypeId }) {
+function PickUpPageContent({ sportTypeId, coachOnly }) {
   const t = useTranslation();
     const [sportName, setSportName] = useState("");
     const [sportCode, setSportCode] = useState("");
@@ -211,14 +211,15 @@ function PickUpPageContent({ sportTypeId }) {
                     min_skill_level: minSkillLevel,
                     max_skill_level: maxSkillLevel,
                 };
-                if (searchTerm) {
-                    const key = JSON.stringify({ queryParams, searchTerm, refreshTrigger, searchRun });
+                if (searchTerm || coachOnly) {
+                    const key = JSON.stringify({ queryParams, searchTerm, coachOnly, refreshTrigger, searchRun });
                     if (searchCache.current?.key !== key) {
                         searchCache.current = {
                             key,
                             promise: pickUpService.searchPickUpGroups(queryParams, searchTerm, {
                                 myOrders: ordersLoad.myOrders,
                                 context: ordersLoad.context,
+                                coachOnly,
                             }),
                         };
                     }
@@ -272,7 +273,7 @@ function PickUpPageContent({ sportTypeId }) {
         }
         fetchGroups();
         return () => { cancelled = true; };
-    }, [sportTypeId, refreshTrigger, activeFilter, searchTerm, searchRun, selectedDateKey, page, pageSize, hasPosition, latitude, longitude, minSkillLevel, maxSkillLevel, levelsLoading, ordersLoad]);
+    }, [sportTypeId, coachOnly, refreshTrigger, activeFilter, searchTerm, searchRun, selectedDateKey, page, pageSize, hasPosition, latitude, longitude, minSkillLevel, maxSkillLevel, levelsLoading, ordersLoad]);
 
     useEffect(() => {
         let cancelled = false;
@@ -487,7 +488,8 @@ function PickUpPageContent({ sportTypeId }) {
     const visibleGroups = groups.filter((group) => !isGroupExpired(group, now)
         && (!selectedDateKey || formatDateTime(group.start_time).date === selectedDateKey));
     const upcomingOrders = getUpcomingConfirmedOrders(myPickUpOrders, now).filter((order) =>
-        String(order.sport?.id || order.pickupGroup?.sport?.id || order.pickupGroup?.sport_id || "") === String(sportTypeId));
+        String(order.sport?.id || order.pickupGroup?.sport?.id || order.pickupGroup?.sport_id || "") === String(sportTypeId)
+        && (!coachOnly || isCoachGroup(order.pickupGroup)));
     const showPageControls = pageInfo.total === null
         ? page > 1 || pageInfo.hasNext : pageInfo.total > 0;
     const needsLevel = myLevelStatus === "missing";
@@ -497,7 +499,7 @@ function PickUpPageContent({ sportTypeId }) {
         <div className="app-page text-slate-900">
             <Navbar />
             <header className="relative mx-auto my-8 w-[95%] max-w-7xl">
-                <h1 className="px-12 text-center text-3xl font-bold">{t("pickUpPage.title")}</h1>
+                <h1 className="px-12 text-center text-3xl font-bold">{coachOnly ? t("教練團") : t("pickUpPage.title")}</h1>
                 <button
                     type="button"
                     aria-label={t("篩選球團")}
@@ -587,8 +589,10 @@ function PickUpPageContent({ sportTypeId }) {
                     {/* {顯示臨打團清單} */}
                     {!loading && visibleGroups.length === 0 && (
                         <p className="text-center text-gray-500">
-                            {searchTerm ? t("沒有符合目前搜尋與篩選條件的臨打團。")
-                                : selectedDate ? t("此頁沒有符合所選日期的臨打團，請切換頁面查看。") : t("pickUpPage.groupEmpty")}
+                            {coachOnly
+                                ? t("目前沒有符合條件的教練團活動。")
+                                : searchTerm ? t("沒有符合目前搜尋與篩選條件的臨打團。")
+                                    : selectedDate ? t("此頁沒有符合所選日期的臨打團，請切換頁面查看。") : t("pickUpPage.groupEmpty")}
                         </p>
                     )}
                     <div>
@@ -707,7 +711,7 @@ function PickUpPageContent({ sportTypeId }) {
                         })}
                     </div>
                     {!loading && (
-                        <nav aria-label={t("臨打團分頁")} className="mt-6 mb-22 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+                        <nav aria-label={coachOnly ? t("教練團分頁") : t("臨打團分頁")} className="mt-6 mb-22 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
                             <div className="flex items-center gap-2">
                                 <label htmlFor="pickup-page-size" className="font-medium">{t("每頁顯示")}</label>
                                 <select
@@ -774,14 +778,14 @@ function PickUpPageContent({ sportTypeId }) {
                 </button>
 
                 {/* 開團入口 */}
-                <button
+                {!coachOnly && <button
                     type="button"
                     onClick={() => setShowCreateDialog(true)}
                     className="fixed bottom-4 left-4 z-50 flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
                 >
                     {functionIconMap.add.icon}
                     <span className="font-bold tracking-wider">{t("pickUpPage.button.hostApply")}</span>
-                </button>
+                </button>}
 
                 {showCreateDialog && <CreatePickUpDialog
                     sportId={sportTypeId}

@@ -12,6 +12,10 @@ const matchesPickUpKeyword = (group, keyword) => [
   group.host_name,
 ].some((value) => String(value || "").toLocaleLowerCase().includes(keyword));
 
+const coachHostName = (group) => group?.host?.display_name || group?.host?.name || group?.host_name || "";
+export const isCoachGroup = (group) => String(coachHostName(group)).includes("教練")
+  || String(group?.title || "").includes("教練");
+
 const groupHostIds = (group) => [group.host?.user_id, group.host?.id, group.host_id, group.created_by].filter(Boolean);
 const groupHostUsername = (group) => group.host?.username || group.host_username;
 
@@ -170,7 +174,7 @@ export const pickUpService = {
   },
 
   // 取得臨打團清單
-  getPickUpList: async (params = {}, { myOrders, context = createPickUpLoadContext(), searchKeyword = "" } = {}) => {
+  getPickUpList: async (params = {}, { myOrders, context = createPickUpLoadContext(), searchKeyword = "", coachOnly = false } = {}) => {
     const [res, orders] = await Promise.all([
       api.get("/pickup-groups", { params }),
       myOrders === undefined ? pickUpService.getMyPickUpList().catch(() => []) : Promise.resolve(myOrders).catch(() => []),
@@ -193,6 +197,8 @@ export const pickUpService = {
     // 對每個 pickup group 進行處理，加入 location info 和設施資訊
     const pickupWithLocation = await Promise.all(
       pickups.map(async (pickup) => {
+        // 清單已有團主名稱時，先排除團主與活動名稱都不符合的活動。
+        if (coachOnly && coachHostName(pickup) && !isCoachGroup(pickup)) return null;
         const orderStatus = enrolledStatusMap[pickup.id];
         let pickupInfo;
         try {
@@ -200,6 +206,7 @@ export const pickUpService = {
           if (!pickupInfo) throw new Error("臨打團詳情為空");
         } catch (error) {
           console.error(`無法取得 ${pickup.id} 的臨打團詳情:`, error);
+          if (coachOnly && !isCoachGroup(pickup)) return null;
           if (searchKeyword && !matchesPickUpKeyword(pickup, searchKeyword)) return null;
           return {
             ...pickup,
@@ -209,6 +216,11 @@ export const pickUpService = {
             detailsUnavailable: true,
           };
         }
+        if (coachOnly && !isCoachGroup({
+          ...pickup,
+          ...pickupInfo,
+          host: pickupInfo.host || pickup.host,
+        })) return null;
         if (searchKeyword && !matchesPickUpKeyword(pickupInfo, searchKeyword)
           && !matchesPickUpKeyword(pickup, searchKeyword)) return null;
         let locationInfo = pickupInfo.location || pickup.location || null;
@@ -228,7 +240,7 @@ export const pickUpService = {
       }),
     );
     return {
-      items: searchKeyword ? pickupWithLocation.filter(Boolean) : pickupWithLocation,
+      items: searchKeyword || coachOnly ? pickupWithLocation.filter(Boolean) : pickupWithLocation,
       total,
       page,
       pageSize,
@@ -240,7 +252,7 @@ export const pickUpService = {
   // 搜尋時走完後端分頁，再比對完整詳情中的團名與團主；避免只搜尋目前顯示的一頁。
   searchPickUpGroups: async (params, keyword, options = {}) => {
     const normalizedKeyword = String(keyword || "").trim().toLocaleLowerCase();
-    if (!normalizedKeyword) return [];
+    if (!normalizedKeyword && !options.coachOnly) return [];
 
     const matches = [];
     let page = 1;
