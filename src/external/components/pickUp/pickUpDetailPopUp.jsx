@@ -12,7 +12,7 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
     const isFull = Number(selectedGroup.current_enrolled || 0) >= Number(selectedGroup.capacity || 0);
     const status = selectedGroup.enrolledStatus;
     const canJoin = status === null && !isFull;
-    const detailNote = selectedGroup.description || t("主揪尚未提供額外備註。");
+    const detailNote = selectedGroup.description || t("pickUpPage.detail.messages.hostNotYetProvideNotes");
     const location = selectedGroup.location || {};
     const parkingName = typeof location.parking_name === "string" ? location.parking_name.trim() : "";
     const parkingLatitude = Number(location.parking_latitude);
@@ -26,8 +26,8 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
         ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${parkingLatitude},${parkingLongitude}`)}&travelmode=driving&dir_action=navigate`
         : null;
     const host = selectedGroup.host || {};
-    const hostName = host.display_name || host.username || t("未提供主揪資訊");
-    const hostUsername = host.username || t("未提供 username");
+    const hostName = host.display_name || host.username || t("pickUpPage.detail.messages.notProvidedHostInfo");
+    const hostUsername = host.username || t("pickUpPage.detail.messages.notProvidedUsername");
     const hostAvatar = host.avatar_thumbnail || host.avatar;
     const canContactHost = Boolean(host.contact_url || host.line_url || host.lineUrl || host.email || host.phone);
     const latitude = selectedGroup.location?.latitude;
@@ -61,13 +61,13 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
                         <span className="flex items-center gap-1.5 rounded-md bg-blue-50 px-2.5 py-1 font-semibold text-blue-700">
                             <span className="text-base">{sportIconMap[selectedGroup.sport?.code]?.icon}</span>
-                            {selectedGroup.sport?.name || t("臨打團")}
+                            {selectedGroup.sport?.name || t("pickUpPage.detail.messages.pickupGroup")}
                         </span>
                         <span className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-semibold ${isFull ? "bg-red-50 text-red-600" : "bg-gray-100 text-gray-700"}`}>
                             <span className="text-base">{InfoIconMap.host?.icon}</span>
-                            {selectedGroup.current_enrolled || 0}/{selectedGroup.capacity || 0} {t("人")}
+                            {selectedGroup.current_enrolled || 0}/{selectedGroup.capacity || 0} {t("pickUpPage.detail.messages.people")}
                         </span>
-                        {registrationClosed && <span className="rounded-md bg-red-100 px-2.5 py-1 font-semibold text-red-700">{t("報名已截止")}</span>}
+                        {registrationClosed && <span className="rounded-md bg-red-100 px-2.5 py-1 font-semibold text-red-700">{t("pickUpPage.detail.messages.registrationAlreadyDeadline")}</span>}
                     </div>
                 </div>
                 <button
@@ -88,23 +88,23 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
                             <div>
                                 <p className="flex items-center gap-1.5 text-xs font-semibold text-blue-700">
                                     <span className="text-lg">{InfoIconMap.time?.icon}</span>
-                                    {t("活動時間")}
+                                    {t("pickUpPage.detail.messages.time")}
                                 </p>
                                 <p className="mt-1 text-lg font-bold text-gray-900">{formatDateTime(selectedGroup.start_time).date}</p>
                             </div>
                             <div className="grid w-full grid-cols-2 overflow-hidden rounded-xl shadow-sm sm:w-[58%]">
                                 <div className="px-3 py-2.5">
-                                    <p className="text-xs text-blue-700">{t("開始時間")}</p>
+                                    <p className="text-xs text-blue-700">{t("pickUpPage.detail.messages.startTime")}</p>
                                     <p className="mt-0.5 font-bold">{formatDateTime(selectedGroup.start_time).time}</p>
                                 </div>
                                 <div className="border-l border-gray-300 px-3 py-2.5">
-                                    <p className="text-xs text-blue-700">{t("結束時間")}</p>
+                                    <p className="text-xs text-blue-700">{t("pickUpPage.detail.messages.endTime")}</p>
                                     <p className="mt-0.5 font-bold">{formatDateTime(selectedGroup.end_time).time}</p>
                                 </div>
                             </div>
                         </div>
                         <div className="mt-3 border-t border-gray-100 pt-3">
-                            <p className="text-xs font-semibold text-gray-500">{t("報名截止日期")}</p>
+                            <p className="text-xs font-semibold text-gray-500">{t("pickUpPage.detail.messages.registrationDeadlineDate")}</p>
                             <p className="mt-1 font-semibold text-gray-500">{formatDateTime(selectedGroup.registration_deadline).date} {formatDateTime(selectedGroup.registration_deadline).time}</p>
                         </div>
                     </div>
@@ -113,7 +113,7 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
                         <button
                             type="button"
                             disabled={!hasCoordinates}
-                            title={hasCoordinates ? t("在 Google Maps 開啟位置") : t("此場地尚未提供座標")}
+                            title={hasCoordinates ? t("pickUpPage.detail.tooltips.googleMapsOpenLocation") : t("pickUpPage.detail.tooltips.thisVenueNotYetProvide")}
                             onClick={openLocationInGoogleMaps}
                             className={`rounded-xl border px-4 py-3 text-left shadow-sm transition ${hasCoordinates
                                 ? "border-gray-100 bg-white hover:border-blue-200 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -122,17 +122,17 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
                         >
                             <p className="flex items-center gap-1.5 text-xs font-semibold text-gray-500">
                                 <span className="text-lg text-blue-600">{InfoIconMap.location?.icon}</span>
-                                {t("地點")}
+                                {t("pickUpPage.detail.messages.location")}
                             </p>
-                            <p className="mt-1 truncate font-semibold text-gray-900">{selectedGroup.location?.name || t("尚未提供")}</p>
+                            <p className="mt-1 truncate font-semibold text-gray-900">{selectedGroup.location?.name || t("pickUpPage.detail.messages.notYetProvide")}</p>
                             {selectedGroup.location?.address && (
                                 <p className="mt-1 truncate text-xs text-gray-500">{selectedGroup.location.address}</p>
                             )}
-                            {hasCoordinates && <p className="mt-2 text-xs font-semibold text-blue-600">{t("點擊查看地圖 →")}</p>}
+                            {hasCoordinates && <p className="mt-2 text-xs font-semibold text-blue-600">{t("pickUpPage.detail.messages.clickViewMap")}</p>}
                         </button>
                         <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
-                            <p className="text-xs font-semibold text-gray-500">{t("程度與費用")}</p>
-                            <p className="mt-1 font-semibold text-gray-900">{selectedGroup.skill_level?.name || t("不限程度")}</p>
+                            <p className="text-xs font-semibold text-gray-500">{t("pickUpPage.detail.messages.levelAndFee")}</p>
+                            <p className="mt-1 font-semibold text-gray-900">{selectedGroup.skill_level?.name || t("pickUpPage.detail.messages.level")}</p>
                             <p className="mt-2 inline-flex rounded-md border border-green-200 bg-green-50 px-2.5 py-1 text-sm font-bold text-green-700">
                                 $ {selectedGroup.fee || 0}
                             </p>
@@ -142,7 +142,7 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
 
                 <section className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
                     <div className="flex items-center justify-between gap-3">
-                        <h3 className="font-bold text-gray-900">{t("主揪資訊")}</h3>
+                        <h3 className="font-bold text-gray-900">{t("pickUpPage.detail.headings.hostInfo")}</h3>
                     </div>
                     <div className="mt-3 flex items-center gap-3">
                         <div className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-blue-100 font-bold text-blue-700">
@@ -150,7 +150,7 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
                             {hostAvatar && (
                                 <img
                                     src={hostAvatar}
-                                    alt={translate("{value0} 的頭像", { value0: hostName })}
+                                    alt={translate("pickUpPage.detail.images.hostAvatar", { value0: hostName })}
                                     onError={(event) => { event.currentTarget.style.display = "none"; }}
                                     className="absolute inset-0 h-full w-full object-cover z-0"
                                 />
@@ -168,42 +168,42 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
                             className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                         >
                             <MessageCircle size={16} aria-hidden="true" />
-                            {t("傳訊息給團主")}
+                            {t("pickUpPage.detail.actions.messageHost")}
                         </button>
                         <button
                             type="button"
                             disabled={!canContactHost}
-                            title={canContactHost ? t("聯絡主揪") : t("主揪尚未提供聯絡方式")}
+                            title={canContactHost ? t("pickUpPage.detail.tooltips.host") : t("pickUpPage.detail.tooltips.hostNotYetProvideMethod")}
                             onClick={() => onContactHost(host)}
                             className={`min-h-10 rounded-lg border px-4 text-sm font-bold transition ${canContactHost
                                 ? "border-blue-200 text-blue-700 hover:bg-blue-50"
                                 : "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
                                 }`}
                         >
-                            {t("聯絡主揪")}
+                            {t("pickUpPage.detail.actions.host")}
                         </button>
                     </div>
                 </section>
 
-                <div>
-                    <h3 className="font-bold text-gray-900">{t("場地設施")}</h3>
-                    <div className="mt-2 flex flex-wrap gap-2">
+                <section>
+                    <h3 className="font-bold text-gray-900">{t("pickUpPage.detail.headings.venueFacilities")}</h3>
+                    <div className="mt-3 flex flex-wrap gap-2">
                         {selectedGroup.facilities?.length ? selectedGroup.facilities.map((facilityKey) => {
                             const facility = facilityMap[facilityKey];
                             return (
-                                <span key={facilityKey} className="flex w-[76px] flex-col items-center justify-center gap-1 rounded-lg border border-gray-200 bg-gray-50 px-2 py-2 text-gray-700">
-                                    <span className="text-xl">{facility?.icon}</span>
-                                    <span className="text-xs font-medium">{facility ? t(facility.name) : facilityKey}</span>
+                                <span key={facilityKey} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                                    <span className="text-lg text-blue-600 [&_svg]:h-5 [&_svg]:w-5" aria-hidden="true">{facility?.icon}</span>
+                                    <span>{facility ? t(facility.labelKey) : facilityKey}</span>
                                 </span>
                             );
-                        }) : <span className="text-sm text-gray-500">{t("尚未提供設施資訊")}</span>}
+                        }) : <span className="text-sm text-gray-500">{t("pickUpPage.detail.messages.notYetProvideFacilitiesInfo")}</span>}
                     </div>
-                </div>
+                </section>
 
                 <button
                     type="button"
                     disabled={!parkingDirectionsUrl}
-                    title={parkingDirectionsUrl ? t("在 Google Maps 開啟停車場導航") : t("此停車場尚未提供座標")}
+                    title={parkingDirectionsUrl ? t("pickUpPage.detail.tooltips.googleMapsOpenParking") : t("pickUpPage.detail.tooltips.thisParkingNotYetProvide")}
                     onClick={openParkingInGoogleMaps}
                     className={`w-full rounded-xl border px-4 py-3 text-left shadow-sm transition ${parkingDirectionsUrl
                         ? "border-gray-100 bg-white hover:border-blue-200 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -212,13 +212,13 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
                 >
                     <span className="flex items-center gap-2 font-semibold text-gray-900">
                         <span className="text-lg text-blue-600">{facilityMap.parking.icon}</span>
-                        {parkingName || t("停車場")}
+                        {parkingName || t("pickUpPage.detail.messages.parking")}
                     </span>
-                    {parkingDirectionsUrl && <span className="mt-2 block text-xs font-semibold text-blue-600">{t("點擊查看地圖 →")}</span>}
+                    {parkingDirectionsUrl && <span className="mt-2 block text-xs font-semibold text-blue-600">{t("pickUpPage.detail.messages.clickViewMap")}</span>}
                 </button>
 
                 <div>
-                    <h3 className="font-bold text-gray-900">{t("主揪備註")}</h3>
+                    <h3 className="font-bold text-gray-900">{t("pickUpPage.detail.headings.hostNotes")}</h3>
                     <p className="mt-2 whitespace-pre-wrap rounded-xl   py-3 text-sm leading-5 text-gray-700">{detailNote}</p>
                 </div>
             </div>
@@ -229,7 +229,7 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
                     onClick={closeDetailModal}
                     className="min-h-11 flex-1 rounded-lg border border-gray-300 px-4 font-semibold text-gray-700 transition hover:bg-gray-50"
                 >
-                    {t("關閉")}
+                    {t("common.actions.close")}
                 </button>
                 {!hideJoin && <button
                     type="button"
@@ -237,10 +237,10 @@ export default function PickUpDetailPopUp({ selectedGroup, onRequestJoin, closeD
                     onClick={() => onRequestJoin(selectedGroup)}
                     className={`min-h-11 flex-1 rounded-lg px-4 font-bold text-white transition ${!canJoin || joining ? "cursor-not-allowed opacity-60" : "hover:opacity-90"} ${registrationClosed && canJoin ? "bg-gray-500" : isFull && status === null ? statusMap.full.class : (statusMap[status]?.class || statusMap.default.class)}`}
                 >
-                    {joining ? t("處理中...") : status !== null
+                    {joining ? t("pickUpPage.detail.actions.processing") : status !== null
                         ? getStatusLabel(status, t)
                         : registrationClosed && !isFull
-                            ? t("報名已截止")
+                            ? t("pickUpPage.detail.actions.registrationAlreadyDeadline")
                         : isFull
                             ? getStatusLabel("full", t)
                             : getStatusLabel("default", t)}

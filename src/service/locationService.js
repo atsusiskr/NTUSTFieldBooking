@@ -7,7 +7,7 @@ export const locationService = {
         let page = 1;
         while (true) {
             const { data } = await api.get("/locations", { params: { page, page_size: 100, opening: true } });
-            if (!Array.isArray(data.items)) throw new Error(translate("場地清單格式不正確"));
+            if (!Array.isArray(data.items)) throw new Error(translate("venuePage.errors.messages.venue"));
             locations.push(...data.items);
             if (!data.items.length || (Number.isInteger(data.total)
                 ? locations.length >= data.total

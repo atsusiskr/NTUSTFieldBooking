@@ -57,11 +57,11 @@ function LoginPage() {
       const password = form.get("password");
 
       if (!email || !password) {
-        errorPopup(t("loginPage.errorMessage.error"), t("請輸入電子郵件與密碼。"));
+        errorPopup(t("loginPage.errorMessage.error"), t("loginPage.errors.pleaseEnterEmailAndPassword"));
         return;
       }
       if (!e.target.elements.email.checkValidity()) {
-        errorPopup(t("loginPage.errorMessage.error"), t("請輸入有效的電子郵件。"));
+        errorPopup(t("loginPage.errorMessage.error"), t("loginPage.errors.pleaseEnterValidEmail"));
         return;
       }
 
@@ -93,13 +93,13 @@ function LoginPage() {
       setSportId(getLoginSportId());
       await startLineAuthorization();
     } catch (error) {
-      errorPopup(t("LINE 登入失敗"), error.message);
+      errorPopup(t("loginPage.errors.lineLoginFailed"), error.message);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-100 to-blue-300">
-      <Loading isLoading={loadingSports || loggingIn} text={loggingIn ? t("登入中...") : t("載入中…")} />
+      <Loading isLoading={loadingSports || loggingIn} text={loggingIn ? t("loginPage.messages.login") : t("common.messages.loading")} />
       <div className="w-[80%] max-w-md" style={{ perspective: "1200px" }}>
         <div className={`auth-card ${isLeaving ? "auth-card-leaving" : ""} relative bg-white shadow-lg rounded-xl p-8 w-full max-w-md transition-transform duration-500 ease-in-out`}>
           <div className="flex flex-col items-center mb-4">
@@ -170,12 +170,12 @@ function LoginPage() {
                 }`}
               disabled={loadingSports || loggingIn}
             >
-              {loggingIn ? t("登入中...") : t("登入")}
+              {loggingIn ? t("loginPage.actions.login") : t("loginPage.actions.login2")}
             </button>
           </form>
           <div className="my-5 flex items-center gap-3 text-sm text-gray-400" aria-hidden="true">
             <div className="h-px flex-1 bg-gray-200" />
-            {t("或")}
+            {t("loginPage.messages.or")}
             <div className="h-px flex-1 bg-gray-200" />
           </div>
           <button
@@ -183,13 +183,13 @@ function LoginPage() {
             onClick={handleLineLogin}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#06C755] py-2 font-semibold text-white transition hover:bg-[#05b94e] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#06C755] focus-visible:ring-offset-2"
           >
-            {isLineDemoMode ? t("體驗 LINE 登入／註冊（展示）") : t("使用 LINE 登入／註冊")}
+            {isLineDemoMode ? t("loginPage.actions.lineLoginRegister") : t("loginPage.actions.loginOrRegisterWithLine")}
           </button>
-          {isLineDemoMode && <p className="mt-2 text-center text-xs text-gray-500">{t("展示模式不會建立真實帳號或登入系統。")}</p>}
+          {isLineDemoMode && <p className="mt-2 text-center text-xs text-gray-500">{t("loginPage.messages.createAccountOrLogin")}</p>}
           <p className="text-center text-sm text-gray-500 mt-4">
-            {t("還沒有帳號？")}{" "}
+            {t("loginPage.messages.noneAccount")}{" "}
             <Link to="/register" onClick={(event) => switchPage(event, "/register")} className="text-blue-500 hover:underline">
-              {t("註冊帳號")}
+              {t("loginPage.actions.registerAccount")}
             </Link>
           </p>
 

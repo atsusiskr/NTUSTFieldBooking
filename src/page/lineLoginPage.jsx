@@ -31,7 +31,7 @@ export function LineAuthorizationPage() {
       if (!code && !lineError) {
         if (liff.isInClient()) {
           const liffId = process.env.REACT_APP_LIFF_ID;
-          if (!liffId) throw new Error(t("缺少 REACT_APP_LIFF_ID 設定"));
+          if (!liffId) throw new Error(t("lineLoginPage.messages.reactAppLiffIdSettings"));
           await liff.init({ liffId });
           liff.openWindow({ url: getLineRedirectUri(), external: true });
           setExternalOpened(true);
@@ -45,7 +45,7 @@ export function LineAuthorizationPage() {
       window.history.replaceState(window.history.state, "", window.location.pathname);
       if (lineError) {
         consumeLineTransaction(returnedState);
-        throw new Error(t("已取消 LINE 登入，請重新嘗試。"));
+        throw new Error(t("lineLoginPage.errors.cancelledLineLoginPleaseRetry"));
       }
 
       const { redirectUri, codeVerifier, nonce } = consumeLineTransaction(returnedState);
@@ -57,22 +57,22 @@ export function LineAuthorizationPage() {
     completeLogin().catch((reason) => {
       const failure = reason.response
         ? describeRequestError(reason, {
-          401: { title: t("LINE 登入失敗"), message: t("LINE 授權驗證失敗。") },
-          404: { title: t("LINE 登入失敗"), message: t("LINE 登入尚未在伺服器設定完成。") },
+          401: { title: t("lineLoginPage.errors.lineLoginFailed"), message: t("lineLoginPage.errors.lineFailed") },
+          404: { title: t("lineLoginPage.errors.lineLoginFailed"), message: t("lineLoginPage.errors.lineLoginNotYetSettings") },
         })
-        : { message: reason.message || t("目前無法使用 LINE 登入，請稍後再試。") };
+        : { message: reason.message || t("lineLoginPage.errors.currentCannotLineLoginPleaseLater") };
       setError(failure.message);
     });
   }, [navigate, setSportId, sportId, t]);
 
-  if (!error && !externalOpened) return <Loading isLoading text={t("正在透過 LINE 驗證身分…")} />;
+  if (!error && !externalOpened) return <Loading isLoading text={t("lineLoginPage.messages.line")} />;
 
   if (externalOpened) return (
     <main className="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-100 to-blue-300 px-4">
       <div className="w-full max-w-md rounded-xl bg-white p-8 text-center shadow-lg">
-        <h1 className="text-xl font-bold text-gray-800">{t("請在外部瀏覽器完成 LINE 登入")}</h1>
+        <h1 className="text-xl font-bold text-gray-800">{t("lineLoginPage.headings.pleaseLineLogin")}</h1>
         <a href={getLineRedirectUri()} target="_blank" rel="noopener noreferrer" className="mt-5 inline-block rounded-lg bg-[#06C755] px-5 py-2 font-semibold text-white">
-          {t("開啟 LINE 登入")}
+          {t("lineLoginPage.messages.openLineLogin")}
         </a>
       </div>
     </main>
@@ -81,10 +81,10 @@ export function LineAuthorizationPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-100 to-blue-300 px-4">
       <div className="w-full max-w-md rounded-xl bg-white p-8 text-center shadow-lg">
-        <h1 className="text-xl font-bold text-gray-800">{t("LINE 登入失敗")}</h1>
+        <h1 className="text-xl font-bold text-gray-800">{t("lineLoginPage.headings.lineLoginFailed")}</h1>
         <p role="alert" className="mt-3 text-sm text-gray-600">{error}</p>
         <button type="button" onClick={() => navigate("/", { replace: true })} className="mt-6 rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white hover:bg-blue-700">
-          {t("回到登入")}
+          {t("lineLoginPage.actions.backToLogin")}
         </button>
       </div>
     </main>

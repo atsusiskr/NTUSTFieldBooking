@@ -32,7 +32,7 @@ const PAGE_SIZES = [10, 20, 50];
 export default function PickUpPage({ coachOnly = false }) {
     const t = useTranslation();
     const sportTypeId = useSportStore((state) => state.sportId);
-    if (!sportTypeId) return <div className="app-page text-slate-900"><Navbar /><Loading isLoading text={t("載入球類資料中...")} /></div>;
+    if (!sportTypeId) return <div className="app-page text-slate-900"><Navbar /><Loading isLoading text={t("pickUpPage.messages.loadSportData")} /></div>;
     // 切換球類時重設頁碼、程度篩選與報名狀態，舊請求由各 effect 清理。
     return <PickUpPageContent key={`${sportTypeId}:${coachOnly}`} sportTypeId={sportTypeId} coachOnly={coachOnly} />;
 }
@@ -113,7 +113,7 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
         if (selectedGroup && isGroupExpired(selectedGroup, now)) setSelectedGroup(null);
         if (joinDialogGroup && (isRegistrationClosed(joinDialogGroup, now) || isGroupExpired(joinDialogGroup, now))) {
             setJoinDialogGroup(null);
-            errorPopup(t("活動報名已截止"), t("這個臨打團已超過報名截止時間，無法再報名。"));
+            errorPopup(t("pickUpPage.errors.registrationAlreadyDeadline"), t("pickUpPage.errors.pickupGroupAlreadyRegistrationDeadlineTimeCannotRegistration"));
         }
     }, [now, selectedGroup, joinDialogGroup, t]);
 
@@ -304,7 +304,7 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
         if (joinInFlight.current) return false;
         const group = groups.find((item) => item.id === groupId) || joinDialogGroup || selectedGroup;
         if (group && (isRegistrationClosed(group) || isGroupExpired(group))) {
-            errorPopup(t("活動報名已截止"), t("這個臨打團已超過報名截止時間，無法再報名。"));
+            errorPopup(t("pickUpPage.errors.registrationAlreadyDeadline"), t("pickUpPage.errors.pickupGroupAlreadyRegistrationDeadlineTimeCannotRegistration"));
             setJoinDialogGroup(null);
             setNow(Date.now());
             return false;
@@ -337,7 +337,7 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
                     ? { ...member, skill_level: myLevel } : member),
             } : undefined;
             if (group && (isRegistrationClosed(group) || isGroupExpired(group))) {
-                errorPopup(t("活動報名已截止"), t("這個臨打團已超過報名截止時間，無法再報名。"));
+                errorPopup(t("pickUpPage.errors.registrationAlreadyDeadline"), t("pickUpPage.errors.pickupGroupAlreadyRegistrationDeadlineTimeCannotRegistration"));
                 setJoinDialogGroup(null);
                 setNow(Date.now());
                 return false;
@@ -360,7 +360,7 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
             );
 
             successPopup("", payload
-                ? translate("已送出 {value0} 人的團體報名，請等待主揪確認。", { value0: payload.party_size })
+                ? translate("pickUpPage.feedback.groupRegistrationSubmitted", { value0: payload.party_size })
                 : t("pickUpPage.successMessage.registrationSuccess"));
             return true;
         } catch (error) {
@@ -389,12 +389,12 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
         const needsGender = genderStatus === "missing";
         const needsLevel = myLevelStatus === "missing";
         if (needsGender && !["male", "female", "other"].includes(selectedGender)) {
-            setSetupSaveError(t("請先選擇性別。"));
+            setSetupSaveError(t("pickUpPage.errors.pleaseFirstSelectGender"));
             return;
         }
         const level = Number(selectedMyLevel);
         if (needsLevel && !levels.some((item) => item.level === level)) {
-            setSetupSaveError(t("請先選擇有效的程度。"));
+            setSetupSaveError(t("pickUpPage.errors.pleaseFirstSelectValidLevel"));
             return;
         }
 
@@ -419,9 +419,9 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
                     setIsDetailModalClosing(false);
                 }
             } else {
-                successPopup(t("設定成功"), needsGender && needsLevel
-                    ? t("你的性別與運動程度已儲存。")
-                    : needsGender ? t("你的性別已儲存。") : t("你的運動程度已儲存。"));
+                successPopup(t("pickUpPage.feedback.settingsSuccess"), needsGender && needsLevel
+                    ? t("pickUpPage.feedback.yourGenderAndSkillLevelAlreadySave")
+                    : needsGender ? t("pickUpPage.feedback.yourGenderAlreadySave") : t("pickUpPage.feedback.yourSkillLevelAlreadySave"));
             }
         } catch (error) {
             setSetupSaveError(describeRequestError(error).message);
@@ -438,11 +438,11 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
 
     const requestJoin = (group) => {
         if (group.detailsUnavailable) {
-            errorPopup(t("活動資訊暫時無法取得"), t("請稍後重新載入，再確認活動資料。"));
+            errorPopup(t("pickUpPage.errors.infoTemporarilyCannot"), t("pickUpPage.errors.pleaseLaterReloadConfirmData"));
             return;
         }
         if (isRegistrationClosed(group) || isGroupExpired(group)) {
-            errorPopup(t("活動報名已截止"), t("這個臨打團已超過報名截止時間，無法再報名。"));
+            errorPopup(t("pickUpPage.errors.registrationAlreadyDeadline"), t("pickUpPage.errors.pickupGroupAlreadyRegistrationDeadlineTimeCannotRegistration"));
             setNow(Date.now());
             return;
         }
@@ -499,10 +499,10 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
         <div className="app-page text-slate-900">
             <Navbar />
             <header className="relative mx-auto my-8 w-[95%] max-w-7xl">
-                <h1 className="px-12 text-center text-3xl font-bold">{coachOnly ? t("教練團") : t("pickUpPage.title")}</h1>
+                <h1 className="px-12 text-center text-3xl font-bold">{coachOnly ? t("pickUpPage.headings.coachGroups") : t("pickUpPage.title")}</h1>
                 <button
                     type="button"
-                    aria-label={t("篩選球團")}
+                    aria-label={t("pickUpPage.accessibility.filterGroup")}
                     aria-expanded={isMobileFilterOpen}
                     aria-controls="mobile-pickup-filters"
                     onClick={() => setIsMobileFilterOpen((isOpen) => !isOpen)}
@@ -513,30 +513,30 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
             </header>
             <Loading isLoading={loading || levelsLoading} text={t("pickUpPage.loadingMessage")} />
 
-            {upcomingOrders.length > 0 && <section role="status" aria-label={t("即將開始的已報名活動")} className="mx-auto mb-6 w-[95%] max-w-7xl rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950 shadow-sm sm:p-5">
-                <h2 className="text-lg font-bold">{t("提醒：你報名的臨打團將在兩天內開始")}</h2>
+            {upcomingOrders.length > 0 && <section role="status" aria-label={t("pickUpPage.accessibility.upcomingStartRegistered")} className="mx-auto mb-6 w-[95%] max-w-7xl rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950 shadow-sm sm:p-5">
+                <h2 className="text-lg font-bold">{t("pickUpPage.headings.yourRegistrationPickupGroupDayStart")}</h2>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
                     {upcomingOrders.map((order) => <article key={order.id} className="rounded-xl border border-amber-200 bg-white p-4">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <h3 className="font-bold text-slate-900">{order.title}</h3>
-                            <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-800">{t("已報名")}</span>
+                            <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-800">{t("pickUpPage.messages.registered")}</span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-700">{formatDateTime(order.start_time).date}・{formatDateTime(order.start_time).time} {t("至")} {formatDateTime(order.end_time).time}</p>
-                        <p className="mt-1 text-sm text-slate-600">{t("地點：")}{order.location?.name || t("未指定")}</p>
-                        {order.pickupGroup && <button type="button" onClick={() => openDetailModal(order.pickupGroup)} className="mt-3 min-h-10 rounded-lg border border-amber-300 px-3 text-sm font-semibold text-amber-900 hover:bg-amber-100">{t("查看活動資訊")}</button>}
+                        <p className="mt-2 text-sm text-slate-700">{formatDateTime(order.start_time).date}・{formatDateTime(order.start_time).time} {t("pickUpPage.messages.to")} {formatDateTime(order.end_time).time}</p>
+                        <p className="mt-1 text-sm text-slate-600">{t("pickUpPage.messages.location")}{order.location?.name || t("pickUpPage.messages.unspecified")}</p>
+                        {order.pickupGroup && <button type="button" onClick={() => openDetailModal(order.pickupGroup)} className="mt-3 min-h-10 rounded-lg border border-amber-300 px-3 text-sm font-semibold text-amber-900 hover:bg-amber-100">{t("pickUpPage.actions.viewInfo")}</button>}
                     </article>)}
                 </div>
             </section>}
-            {myOrdersError && <p role="alert" className="mx-auto mb-4 w-[95%] max-w-7xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{t("近期已報名活動載入失敗：")}{myOrdersError}<button type="button" onClick={() => setRefreshTrigger((value) => value + 1)} className="ml-2 font-semibold underline">{t("重新載入")}</button></p>}
+            {myOrdersError && <p role="alert" className="mx-auto mb-4 w-[95%] max-w-7xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{t("pickUpPage.errors.registeredLoadFailed")}{myOrdersError}<button type="button" onClick={() => setRefreshTrigger((value) => value + 1)} className="ml-2 font-semibold underline">{t("common.actions.reload")}</button></p>}
 
             {genderStatus === "error" && <div className="mx-auto mb-4 flex w-[95%] max-w-7xl items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="alert">
-                <span>{t("無法取得個人資料，請重新載入。")}</span>
-                <button type="button" onClick={() => setProfileRetry((previous) => previous + 1)} className="shrink-0 font-bold underline">{t("重新載入")}</button>
+                <span>{t("pickUpPage.errors.cannotProfilePleaseRetryLoad")}</span>
+                <button type="button" onClick={() => setProfileRetry((previous) => previous + 1)} className="shrink-0 font-bold underline">{t("common.actions.reload")}</button>
             </div>}
             {(needsLevel || needsGender) && setupDialogDismissed && (
                 <div className="mx-auto mb-4 flex w-[95%] max-w-7xl items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900" role="status">
-                    <span>{needsLevel && needsGender ? t("你還沒有設定性別與這個球類的程度。") : needsGender ? t("你還沒有設定性別。") : t("你還沒有設定這個球類的程度。")}</span>
-                    <button type="button" onClick={() => setSetupDialogDismissed(false)} className="shrink-0 font-bold text-blue-700 underline">{needsGender ? t("設定資料") : t("設定程度")}</button>
+                    <span>{needsLevel && needsGender ? t("pickUpPage.messages.yourNoneSettingsGenderAndSportLevel") : needsGender ? t("pickUpPage.messages.yourNoneSettingsGender") : t("pickUpPage.messages.yourNoneSettingsSportLevel")}</span>
+                    <button type="button" onClick={() => setSetupDialogDismissed(false)} className="shrink-0 font-bold text-blue-700 underline">{needsGender ? t("pickUpPage.actions.settingsData") : t("pickUpPage.actions.settingsLevel")}</button>
                 </div>
             )}
             {(needsLevel || needsGender) && !setupDialogDismissed && !loading && !levelsLoading && myLevelStatus !== "checking" && genderStatus !== "checking" && genderStatus !== "error" && (
@@ -581,8 +581,8 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
 
                 <main className="min-w-0 flex-1">
                     {searchTerm && !loading && <div role="status" className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-                        <span>{t("搜尋「{value0}」：共 {value1} 筆", { value0: searchTerm, value1: pageInfo.total })}</span>
-                        <button type="button" onClick={clearSearch} className="font-semibold text-blue-700 hover:underline">{t("清除搜尋")}</button>
+                        <span>{t("pickUpPage.messages.searchResultCount", { value0: searchTerm, value1: pageInfo.total })}</span>
+                        <button type="button" onClick={clearSearch} className="font-semibold text-blue-700 hover:underline">{t("pickUpPage.actions.search")}</button>
                     </div>}
                     <GroupNearbyMap groups={visibleGroups} onSelectGroup={openDetailModal} />
 
@@ -590,9 +590,9 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
                     {!loading && visibleGroups.length === 0 && (
                         <p className="text-center text-gray-500">
                             {coachOnly
-                                ? t("目前沒有符合條件的教練團活動。")
-                                : searchTerm ? t("沒有符合目前搜尋與篩選條件的臨打團。")
-                                    : selectedDate ? t("此頁沒有符合所選日期的臨打團，請切換頁面查看。") : t("pickUpPage.groupEmpty")}
+                                ? t("pickUpPage.messages.currentNone")
+                                : searchTerm ? t("pickUpPage.messages.noneCurrentSearchAndFilterPickupGroup")
+                                    : selectedDate ? t("pickUpPage.messages.thisNoneDatePickupGroupPleaseView") : t("pickUpPage.groupEmpty")}
                         </p>
                     )}
                     <div>
@@ -603,7 +603,7 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
 
                             return (
                                 <div key={group.id} className="mx-auto mb-4 p-5 border border-gray-200 rounded-xl shadow-sm bg-white">
-                                    {group.detailsUnavailable && <p role="status" className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{t("活動資訊暫時無法取得，請稍後重新載入。")}</p>}
+                                    {group.detailsUnavailable && <p role="status" className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{t("pickUpPage.errors.infoTemporarilyCannotPleaseLaterReload")}</p>}
 
                                     {/* 標題與人數狀態 */}
                                     <div className="mb-3 flex items-start justify-between gap-3">
@@ -614,13 +614,13 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
                                                     {sportIconMap[group.sport?.code]?.icon}
                                                     {group.sport?.name || "-"}
                                                 </p>
-                                                {registrationClosed && <span className="shrink-0 rounded-md bg-red-100 px-2 py-1 text-sm font-semibold text-red-700">{t("報名已截止")}</span>}
+                                                {registrationClosed && <span className="shrink-0 rounded-md bg-red-100 px-2 py-1 text-sm font-semibold text-red-700">{t("pickUpPage.messages.registrationAlreadyDeadline")}</span>}
                                             </div>
                                             <p className="break-words text-sm font-semibold text-gray-400">{t("pickUpPage.label.hostName")} {group.host?.display_name || "-"}</p>
                                         </div>
 
                                         <div className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-sm font-semibold ${isFull ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}`}>
-                                            {group.current_enrolled || 0}/{group.capacity || 0} {t("人")}
+                                            {group.current_enrolled || 0}/{group.capacity || 0} {t("pickUpPage.messages.people")}
                                         </div>
                                     </div>
 
@@ -659,7 +659,7 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
                                                         className="flex items-center gap-1.5 bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm border border-gray-200"
                                                     >
                                                         <span className="opacity-60">{facility?.icon}</span>
-                                                        <span className="font-medium">{facility && t(facility.name)}</span>
+                                                        <span className="font-medium">{facility && t(facility.labelKey)}</span>
                                                     </span>
                                                 )
                                             })}
@@ -683,7 +683,7 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
                                                 disabled={group.detailsUnavailable}
                                                 className="min-h-11 w-2/5 rounded-lg border border-blue-300 px-4 py-2 font-semibold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                                             >
-                                                {t("顯示詳細")}
+                                                {t("pickUpPage.actions.showDetails")}
                                             </button>
 
                                             {/* 報名按鈕 */}
@@ -695,11 +695,11 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
                                                     ${registrationClosed && status === null && !isFull ? "bg-gray-500" : isFull && status === null ? statusMap.full.class : (statusMap[status]?.class || statusMap.default.class)}`}
                                             >
                                                 {group.detailsUnavailable
-                                                    ? t("資訊載入失敗")
+                                                    ? t("pickUpPage.actions.infoLoadFailed")
                                                     : status !== null
                                                     ? getStatusLabel(status, t)
                                                     : registrationClosed && !isFull
-                                                        ? t("報名已截止")
+                                                        ? t("pickUpPage.actions.registrationAlreadyDeadline")
                                                     : isFull
                                                         ? getStatusLabel("full", t)
                                                         : getStatusLabel("default", t)}
@@ -711,26 +711,26 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
                         })}
                     </div>
                     {!loading && (
-                        <nav aria-label={coachOnly ? t("教練團分頁") : t("臨打團分頁")} className="mt-6 mb-22 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+                        <nav aria-label={coachOnly ? t("pickUpPage.accessibility.coachGroupPagination") : t("pickUpPage.accessibility.pickupGroup")} className="mt-6 mb-22 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
                             <div className="flex items-center gap-2">
-                                <label htmlFor="pickup-page-size" className="font-medium">{t("每頁顯示")}</label>
+                                <label htmlFor="pickup-page-size" className="font-medium">{t("pickUpPage.labels.show")}</label>
                                 <select
                                     id="pickup-page-size"
                                     value={pageSize}
                                     onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}
                                     className="rounded-lg border border-gray-300 bg-white px-2 py-2 text-gray-800"
                                 >
-                                    {PAGE_SIZES.map((size) => <option key={size} value={size}>{size} {t("筆")}</option>)}
+                                    {PAGE_SIZES.map((size) => <option key={size} value={size}>{size} {t("pickUpPage.messages.items")}</option>)}
                                 </select>
                             </div>
                             {showPageControls && (
                                 <div className="flex items-center gap-2">
                                     <span className="whitespace-nowrap text-gray-500">
-                                        {t("第")} {page}{pageCount === null ? "" : ` / ${pageCount}`} {t("頁")}
-                                        {pageInfo.total === null ? "" : translate(" · 共 {value0} 筆", { value0: pageInfo.total })}
+                                        {t("pickUpPage.messages.number")} {page}{pageCount === null ? "" : ` / ${pageCount}`} {t("pickUpPage.messages.page")}
+                                        {pageInfo.total === null ? "" : translate("pickUpPage.messages.resultCount", { value0: pageInfo.total })}
                                     </span>
-                                    <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page <= 1} className="min-h-10 rounded-lg border border-gray-300 px-3 font-semibold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40">{t("上一頁")}</button>
-                                    <button type="button" onClick={() => setPage((current) => current + 1)} disabled={!pageInfo.hasNext} className="min-h-10 rounded-lg border border-gray-300 px-3 font-semibold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40">{t("下一頁")}</button>
+                                    <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page <= 1} className="min-h-10 rounded-lg border border-gray-300 px-3 font-semibold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40">{t("pickUpPage.actions.previousPage")}</button>
+                                    <button type="button" onClick={() => setPage((current) => current + 1)} disabled={!pageInfo.hasNext} className="min-h-10 rounded-lg border border-gray-300 px-3 font-semibold text-blue-600 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40">{t("pickUpPage.actions.nextPage")}</button>
                                 </div>
                             )}
                         </nav>
@@ -798,7 +798,7 @@ function PickUpPageContent({ sportTypeId, coachOnly }) {
                         setShowCreateDialog(false);
                         setPage(1);
                         setRefreshTrigger((value) => value + 1);
-                        successPopup(t("建立成功"), t("臨打團已建立；列表會依目前的篩選條件顯示。"));
+                        successPopup(t("pickUpPage.feedback.createSuccess"), t("pickUpPage.feedback.pickupGroupAlreadyCreateCurrentFilterShow"));
                     }}
                 />}
             </div>

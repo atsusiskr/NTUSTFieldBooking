@@ -3,7 +3,7 @@
 ## 文案與語系
 
 - 元件內使用 `const t = useTranslation()`；一般工具函式使用 `translate()`。兩者都在 `src/locale/i18n.js`。
-- 新增或遷移文案時使用描述用途的語意鍵，例如 `notificationPage.title`、`notificationPage.card.actions.markRead`；繁中內容放在 `src/locale/zh-TW/translate.js` 的對應頁面結構。`ui.js` 暫供尚未遷移的畫面使用。
+- 所有畫面文案使用描述用途的語意鍵，例如 `notificationPage.title`、`notificationPage.card.actions.markRead`；繁中內容放在 `src/locale/zh-TW/translate.js` 的對應頁面結構。跨頁通用的文案放在 `common`，不要再以繁中原文作為翻譯鍵。
 - 同一原文在不同畫面若需要不同譯法，改用頁面專屬的語意鍵，避免共用原文鍵造成譯法衝突。
 - 動態文案使用具名參數，例如 `t("notificationPage.pagination.total", { count })`，字典中放完整句子 `"共 {count} 則"`。整句一起翻譯，避免把「共」「則」分開拼接。
 - `aria-label`、`alt`、`placeholder`、對話框、錯誤訊息及選項標籤也屬於畫面文案。

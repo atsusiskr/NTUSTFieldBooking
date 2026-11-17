@@ -44,10 +44,7 @@ export function setLocale(locale) {
   return true;
 }
 
-const lookup = (dictionary, key) => {
-  if (Object.prototype.hasOwnProperty.call(dictionary.ui || {}, key)) return dictionary.ui[key];
-  return key.split(".").reduce((value, segment) => value?.[segment], dictionary);
-};
+const lookup = (dictionary, key) => key.split(".").reduce((value, segment) => value?.[segment], dictionary);
 
 export function translate(key, params = {}, locale = currentLocale) {
   if (key == null) return "";

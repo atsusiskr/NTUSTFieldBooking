@@ -85,6 +85,8 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 
 所有 API 請求都會帶 Cookie。網站啟動時呼叫 `POST /auth/refresh` 恢復登入；既有 Access Token 過期時也會先 refresh 再重送原請求。登出呼叫 `POST /auth/logout` 撤銷 session。若 LINE channel 已獲准 Email address permission，可設 `REACT_APP_LINE_EMAIL_SCOPE=true`，授權時才會要求 `email` 權限。
 
+右上角選單的「切換至後台」預設連到 `https://vdmin.gravitycat.tw/login`，可用 `REACT_APP_ADMIN_URL` 覆寫。後台也必須在頁面啟動時帶 Cookie 呼叫同一 API 的 `POST /auth/refresh`，成功後才直接進入管理頁；相關整合流程見 [後台共用登入設計](docs/admin-sso-api-change-request.md)。
+
 既有 Bot 的 LIFF 登入入口會先把登入頁開到外部瀏覽器，再開始上述授權流程。這是因為 LINE 不保證 LIFF 內直接開啟 LINE Login 授權頁的行為。
 
 本機 `localhost:5713` 與正式 API 的 `gravitycat.tw` 不同站；後端文件設定的 `SameSite=Lax` Cookie 無法在這種跨站 API 請求中維持 session。本機可驗證授權回跳與 API 回應；若要驗證重新整理後的登入狀態，請使用與 API 同站的 HTTPS 測試網域。

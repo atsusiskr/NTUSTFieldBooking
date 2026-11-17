@@ -1,14 +1,14 @@
 import { getLocale, translate } from "../locale/i18n";
 
 const emptyDateTime = () => ({
-    date: translate("未定日期"),
-    time: translate("未定時間"),
-    fullDate: translate("未定日期"),
-    numericDate: translate("未定日期"),
-    monthDay: translate("未定日期"),
+    date: translate("common.dateTime.messages.date"),
+    time: translate("common.dateTime.messages.time"),
+    fullDate: translate("common.dateTime.messages.date"),
+    numericDate: translate("common.dateTime.messages.date"),
+    monthDay: translate("common.dateTime.messages.date"),
     weekday: "",
     weekdayShort: "",
-    shortDate: translate("未定日期"),
+    shortDate: translate("common.dateTime.messages.date"),
 });
 
 const pad = (value) => String(value).padStart(2, "0");

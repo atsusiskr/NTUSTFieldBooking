@@ -1,6 +1,7 @@
 import { useTranslation } from "../locale/i18n";
 import './venuePicker.css';
 import layouts from './venueLayout.json';
+import { fixtureLabelKeys } from '../constant/fixtureLabelKeys';
 
 function VenuePicker({ venueName, onSelectVenue, selectedId }) {
   const t = useTranslation();
@@ -8,7 +9,7 @@ function VenuePicker({ venueName, onSelectVenue, selectedId }) {
     layout = layouts[venueName];
 
     if (!layout) {
-        return <div className="venue-diagram-error">{t("找不到「")}{String(venueName)}{t("」的場地資料")}</div>;
+        return <div className="venue-diagram-error">{t("venuePage.picker.messages.venueNotFoundPrefix")}{String(venueName)}{t("venuePage.picker.messages.venueData")}</div>;
     }
 
     const vb = { w: 1000, h: 600 };
@@ -117,7 +118,7 @@ function VenuePicker({ venueName, onSelectVenue, selectedId }) {
                                         fontSize={f.fontSize ?? 16}
                                         fill="#fff"
                                     >
-                                        {t(f.text)}
+                                        {t(fixtureLabelKeys[f.text] || f.text)}
                                     </text>
                                 )}
                             </g>

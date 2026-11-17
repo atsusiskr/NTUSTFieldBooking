@@ -11,7 +11,7 @@ function normalizeLevels(items) {
   const unique = new Map();
   for (const item of items) {
     if (!Number.isInteger(item.level) || typeof item.label !== "string") {
-      throw new Error(translate("程度表資料格式不正確"));
+      throw new Error(translate("common.skillLevels.messages.levelData"));
     }
     unique.set(item.level, { level: item.level, label: item.label });
   }
@@ -28,11 +28,11 @@ async function fetchLevels(sportId) {
     const { data } = await api.get("/skill-levels", {
       params: { page, page_size: pageSize, sort_order: "ASC" },
     });
-    if (!Array.isArray(data.items)) throw new Error(translate("程度表回應格式不正確"));
+    if (!Array.isArray(data.items)) throw new Error(translate("common.skillLevels.messages.level"));
     if (data.items.length === 0) break;
 
     const signature = JSON.stringify(data.items);
-    if (signature === previousPage) throw new Error(translate("程度表分頁未正確更新"));
+    if (signature === previousPage) throw new Error(translate("common.skillLevels.messages.levelUpdate"));
     previousPage = signature;
     allItems.push(...data.items);
 
@@ -58,7 +58,7 @@ async function fetchLevels(sportId) {
 
 export const skillLevelService = {
   refreshSkillLevels(sportId) {
-    if (!sportId) return Promise.reject(new Error(translate("請先選擇球類")));
+    if (!sportId) return Promise.reject(new Error(translate("common.skillLevels.errors.pleaseFirstSelectSport")));
     if (!pendingRequests.has(sportId)) {
       pendingRequests.set(sportId, fetchLevels(sportId).finally(() => {
         pendingRequests.delete(sportId);
@@ -68,7 +68,7 @@ export const skillLevelService = {
   },
 
   async getSkillLevels(sportId) {
-    if (!sportId) throw new Error(translate("請先選擇球類"));
+    if (!sportId) throw new Error(translate("common.skillLevels.errors.pleaseFirstSelectSport"));
     if (pendingRequests.has(sportId)) return pendingRequests.get(sportId);
     try {
       // 每次開啟頁面先確認 API；舊版快取可能保留已變更的標籤。
@@ -89,7 +89,7 @@ export const skillLevelService = {
   },
 
   getMyLevel(sportId) {
-    if (!sportId) return Promise.reject(new Error(translate("請先選擇球類")));
+    if (!sportId) return Promise.reject(new Error(translate("common.skillLevels.errors.pleaseFirstSelectSport")));
     if (!pendingMyLevelRequests.has(sportId)) {
       pendingMyLevelRequests.set(sportId,
         api.get(`/me/skill-levels/${sportId}`)

@@ -14,6 +14,8 @@ import { findVenueSport } from "../utils/venueSportFilter";
 import SportSwitcher from "./SportSwitcher";
 import './navbar.css';
 
+const ADMIN_URL = process.env.REACT_APP_ADMIN_URL || "https://vdmin.gravitycat.tw/login";
+
 function Navbar() {
   const t = useTranslation();
   const { sportType, id: locationId } = useParams();
@@ -31,7 +33,7 @@ function Navbar() {
   const selectedSport = findVenueSport(sports, currentType);
   const pathname = location.pathname;
   const activeSection = pathname.startsWith("/external/pickup") ? "pickup"
-    : pathname === "/external/coach" ? "coach"
+    : pathname.startsWith("/external/coach") ? "coach"
     : pathname === "/external/venue" || pathname.startsWith("/external/venue/") || locationId || pathname === "/external/pay" ? "venue"
       : pathname === "/external/notification" ? "notification"
         : pathname.startsWith("/external/order") ? "orders" : null;
@@ -135,23 +137,23 @@ function Navbar() {
 
   const hasUnread = unread.count > 0;
   const notificationLabel = hasUnread
-    ? unread.exact ? t("通知，{count} 則未讀", { count: unread.count }) : t("通知，有未讀通知")
-    : t("通知");
+    ? unread.exact ? t("common.navigation.messages.notificationCountItemsUnread", { count: unread.count }) : t("common.navigation.messages.notificationUnreadNotification")
+    : t("common.navigation.messages.notification");
   const badge = hasUnread && <span className="notification-badge" aria-hidden="true">{unread.exact ? unread.count > 99 ? "99+" : unread.count : ""}</span>;
 
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <h2>{t("打球租與揪系統")}</h2>
+        <h2>{t("common.navigation.headings.and")}</h2>
       </div>
       
       {/* central menu */}
       <ul className="navbar-center">
-        <li className={isActive("pickup") ? "is-active" : undefined}><Link className={isActive("pickup") ? "is-active" : undefined} aria-current={isActive("pickup") ? "page" : undefined} to="/external/pickup">{t("臨打")}</Link></li>
-        <li className={isActive("coach") ? "is-active" : undefined}><Link className={isActive("coach") ? "is-active" : undefined} aria-current={isActive("coach") ? "page" : undefined} to="/external/coach">{t("教練團")}</Link></li>
-        <li className={isActive("venue") ? "is-active" : undefined}><Link className={isActive("venue") ? "is-active" : undefined} aria-current={isActive("venue") ? "page" : undefined} to={`/external/venue/${currentType}`}>{t("場地")}</Link></li>
-        <li className={isActive("notification") ? "is-active" : undefined}><Link className={`nav-notification-link${isActive("notification") ? " is-active" : ""}`} aria-current={isActive("notification") ? "page" : undefined} aria-label={notificationLabel} to="/external/notification">{t("通知")}{badge}</Link></li>
-        <li className={isActive("orders") ? "is-active" : undefined}><Link className={isActive("orders") ? "is-active" : undefined} aria-current={pathname === "/external/order" ? "page" : undefined} to="/external/order">{t("我的預約")}</Link></li>
+        <li className={isActive("pickup") ? "is-active" : undefined}><Link className={isActive("pickup") ? "is-active" : undefined} aria-current={isActive("pickup") ? "page" : undefined} to="/external/pickup">{t("common.navigation.actions.pickup")}</Link></li>
+        <li className={isActive("coach") ? "is-active" : undefined}><Link className={isActive("coach") ? "is-active" : undefined} aria-current={isActive("coach") ? "page" : undefined} to="/external/coach">{t("common.navigation.actions.coachGroups")}</Link></li>
+        <li className={isActive("venue") ? "is-active" : undefined}><Link className={isActive("venue") ? "is-active" : undefined} aria-current={isActive("venue") ? "page" : undefined} to={`/external/venue/${currentType}`}>{t("common.actions.venue")}</Link></li>
+        <li className={isActive("notification") ? "is-active" : undefined}><Link className={`nav-notification-link${isActive("notification") ? " is-active" : ""}`} aria-current={isActive("notification") ? "page" : undefined} aria-label={notificationLabel} to="/external/notification">{t("common.navigation.actions.notification")}{badge}</Link></li>
+        <li className={isActive("orders") ? "is-active" : undefined}><Link className={isActive("orders") ? "is-active" : undefined} aria-current={pathname === "/external/order" ? "page" : undefined} to="/external/order">{t("common.actions.myBookings")}</Link></li>
       </ul>
       
       <div className="navbar-actions">
@@ -160,7 +162,7 @@ function Navbar() {
         <button
           type="button"
           className="icon-container"
-          aria-label={hasUnread ? t("選單，有未讀通知") : t("選單")}
+          aria-label={hasUnread ? t("common.navigation.accessibility.unreadNotification") : t("common.navigation.accessibility.menu")}
           aria-expanded={isMenuOpen}
           aria-controls="user-menu"
           onClick={() => setIsMenuOpen((isOpen) => !isOpen)}
@@ -171,7 +173,7 @@ function Navbar() {
             {(user?.avatar_thumbnail || user?.avatar) && (
               <img
                 src={user.avatar_thumbnail || user.avatar}
-                alt={t("使用者頭像")}
+                alt={t("common.navigation.images.user")}
                 onError={(event) => { event.currentTarget.style.display = "none"; }}
               />
             )}
@@ -187,22 +189,23 @@ function Navbar() {
               {user?.avatar && <img src={user.avatar_thumbnail || user.avatar} alt="" onError={(event) => { event.currentTarget.style.display = "none"; }} />}
             </span>
             <div>
-              <p>{user?.display_name || t("使用者")}</p>
+              <p>{user?.display_name || t("common.navigation.messages.user")}</p>
               {user?.username && <span className="dropdown-username">@{user.username}</span>}
             </div>
           </div>
           <div className="dropdown-links">
             <div className="navbar-sport-mobile"><SportSwitcher id="navbar-sport-mobile" sports={sports} selectedSport={selectedSport} onSelect={handleSportChange} restoreFocusOnSelect={false} /></div>
-            <Link className={pathname === "/external/pickup" ? "is-active" : undefined} aria-current={pathname === "/external/pickup" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/pickup">{t("臨打")}</Link>
-            <Link className={isActive("coach") ? "is-active" : undefined} aria-current={isActive("coach") ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/coach">{t("教練團")}</Link>
-            <Link className={pathname === "/external/pickup/manage" ? "is-active" : undefined} aria-current={pathname === "/external/pickup/manage" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/pickup/manage">{t("管理臨打團")}</Link>
-            <Link className={isActive("venue") ? "is-active" : undefined} aria-current={isActive("venue") ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to={`/external/venue/${currentType}`}>{t("場地")}</Link>
-            <Link className={`nav-notification-link${isActive("notification") ? " is-active" : ""}`} aria-current={isActive("notification") ? "page" : undefined} aria-label={notificationLabel} onClick={() => setIsMenuOpen(false)} to="/external/notification">{t("通知")}{badge}</Link>
-            <Link className={pathname === "/external/order" ? "is-active" : undefined} aria-current={pathname === "/external/order" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/order">{t("我的預約")}</Link>
-            <Link className={pathname === "/external/order/history" ? "is-active" : undefined} aria-current={pathname === "/external/order/history" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/order/history">{t("歷史預約")}</Link>
-            <Link className={pathname === "/external/user" ? "is-active" : undefined} aria-current={pathname === "/external/user" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/user">{t("個人資料")}</Link>
+            <Link className={pathname === "/external/pickup" ? "is-active" : undefined} aria-current={pathname === "/external/pickup" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/pickup">{t("common.navigation.actions.pickup")}</Link>
+            <Link className={isActive("coach") ? "is-active" : undefined} aria-current={isActive("coach") ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/coach">{t("common.navigation.actions.coachGroups")}</Link>
+            <Link className={pathname === "/external/pickup/manage" ? "is-active" : undefined} aria-current={pathname === "/external/pickup/manage" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/pickup/manage">{t("common.navigation.actions.title")}</Link>
+            <Link className={isActive("venue") ? "is-active" : undefined} aria-current={isActive("venue") ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to={`/external/venue/${currentType}`}>{t("common.actions.venue")}</Link>
+            <Link className={`nav-notification-link${isActive("notification") ? " is-active" : ""}`} aria-current={isActive("notification") ? "page" : undefined} aria-label={notificationLabel} onClick={() => setIsMenuOpen(false)} to="/external/notification">{t("common.navigation.actions.notification")}{badge}</Link>
+            <Link className={pathname === "/external/order" ? "is-active" : undefined} aria-current={pathname === "/external/order" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/order">{t("common.actions.myBookings")}</Link>
+            <Link className={pathname === "/external/order/history" ? "is-active" : undefined} aria-current={pathname === "/external/order/history" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/order/history">{t("common.navigation.actions.booking")}</Link>
+            <Link className={pathname === "/external/user" ? "is-active" : undefined} aria-current={pathname === "/external/user" ? "page" : undefined} onClick={() => setIsMenuOpen(false)} to="/external/user">{t("common.navigation.actions.profile")}</Link>
+            <a href={ADMIN_URL} onClick={() => setIsMenuOpen(false)}>{t("common.navigation.actions.admin")}</a>
           </div>
-          <a className="logout-link" href="/" onClick={handleLogout}>{t("登出")}</a>
+          <a className="logout-link" href="/" onClick={handleLogout}>{t("common.navigation.messages.logout")}</a>
         </div>
       </div>
       </div>

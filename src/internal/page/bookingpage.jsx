@@ -55,7 +55,7 @@ function Bookpage() {
             <div className="flex w-[150px] gap-2.5 items-end m-5 md:ml-[50px]">
                 <button onClick={() => window.history.back()} className="flex items-center gap-2.5 text-xl text-gray-500 hover:text-black transition-colors duration-300">
                     <FaArrowLeft />
-                    {t("返回場地列表")}
+                    {t("common.actions.backToVenues")}
                 </button>
             </div>
 
@@ -65,7 +65,7 @@ function Bookpage() {
                 <div className="left-panel">
                     <div className="venue-board flex justify-center">
                         {isSchool === 'true' ? (
-                            <img src={imgUrl} alt={t("場地圖片")} className="venue-image" />
+                            <img src={imgUrl} alt={t("internalBookingPage.images.venue")} className="venue-image" />
                         ) : (
                             <VenuePicker
                                 venueName={name}
@@ -76,14 +76,14 @@ function Bookpage() {
                     </div>
                     <div className="md:px-[50px]">
                         <h2 className="flex justify-self-start text-3xl font-medium">{name}</h2>
-                        <p className="venue-description">{t("跟你們介紹一下這個網球場，這裡是拿來打籃球的，\n                            不是打羽球的")}
+                        <p className="venue-description">{t("internalBookingPage.messages.yourTennisBasketballBadminton")}
                         </p>
                     </div>
                     {/* Tabs */}
                     <div className="tab-container w-full min-width 260px max-w-[450px] mx-auto m-3 flex justify-center gap-7 border border-gray-200 rounded-lg">
-                        <button className={`tab ${activeTab === 'info' ? 'active' : ''}`} onClick={() => setActiveTab('info')}>{t("場地資訊")}</button>
-                        <button className={`tab ${activeTab === 'rule' ? 'active' : ''}`} onClick={() => setActiveTab('rule')}>{t("使用規則")}</button>
-                        <button className={`tab ${activeTab === 'facility' ? 'active' : ''}`} onClick={() => setActiveTab('facility')}>{t("設施")}</button>
+                        <button className={`tab ${activeTab === 'info' ? 'active' : ''}`} onClick={() => setActiveTab('info')}>{t("internalBookingPage.actions.venueInfo")}</button>
+                        <button className={`tab ${activeTab === 'rule' ? 'active' : ''}`} onClick={() => setActiveTab('rule')}>{t("internalBookingPage.actions.items")}</button>
+                        <button className={`tab ${activeTab === 'facility' ? 'active' : ''}`} onClick={() => setActiveTab('facility')}>{t("internalBookingPage.actions.facilities")}</button>
                     </div>
 
                     {/* Info */}
@@ -92,34 +92,34 @@ function Bookpage() {
                             <div className="info-card">
                                 <div className="icon">👥</div>
                                 <div className="text">
-                                    <div className="label">{t("容納人數")}</div>
-                                    <div className="value">{t("20人")}</div>
+                                    <div className="label">{t("internalBookingPage.messages.peopleCount")}</div>
+                                    <div className="value">{t("internalBookingPage.messages.people")}</div>
                                 </div>
                             </div>
                             <div className="info-card">
                                 <div className="icon">🕒</div>
                                 <div className="text">
-                                    <div className="label">{t("開放時間")}</div>
+                                    <div className="label">{t("common.messages.openingHours")}</div>
                                     <div className="value">08:10 - 22:00</div>
                                 </div>
                             </div>
                             <div className="info-card">
                                 <div className="icon">📍</div>
                                 <div className="text">
-                                    <div className="label">{t("位置")}</div>
-                                    <div className="value">{t("T4教學大樓旁")}</div>
+                                    <div className="label">{t("internalBookingPage.messages.location")}</div>
+                                    <div className="value">{t("internalBookingPage.messages.t4")}</div>
                                 </div>
                             </div>
                             <div className="info-card">
                                 <div className="icon">ℹ️</div>
                                 <div className="text">
-                                    <div className="label">{t("場地狀態")}</div>
+                                    <div className="label">{t("internalBookingPage.messages.venueStatus")}</div>
                                     <div
                                         className={`value ${isOpen ? 'status-open' : 'status-closed'}`}
                                         onClick={() => setIsOpen(!isOpen)}
                                         style={{ cursor: 'pointer' }}
                                     >
-                                        {isOpen ? t("開放") : t("關閉")}
+                                        {isOpen ? t("internalBookingPage.messages.open") : t("common.messages.close")}
                                     </div>
                                 </div>
                             </div>
@@ -128,10 +128,10 @@ function Bookpage() {
                     {activeTab === 'rule' && (
                         <div className="rule-section">
                             <ol className="rule-list">
-                                <li>{t("禁止在場地內飲食，只允許飲用水")}</li>
-                                <li>{t("請保持場地清潔，離開時帶走所有個人物品和垃圾")}</li>
-                                <li>{t("預約後請準時到場，遲到超過15分鐘視為棄權")}</li>
-                                <li>{t("雨天或場地維修時，場地可能會臨時關閉")}</li>
+                                <li>{t("internalBookingPage.messages.venue")}</li>
+                                <li>{t("internalBookingPage.messages.pleaseVenuePeople")}</li>
+                                <li>{t("internalBookingPage.messages.bookingPlease")}</li>
+                                <li>{t("internalBookingPage.messages.dayOrVenueVenueClose")}</li>
                             </ol>
                         </div>
                     )}
@@ -139,19 +139,19 @@ function Bookpage() {
                     {activeTab === 'facility' && (
                         <div className="facility-section">
                             <div className="facility-list">
-                                <div className="facility-card">{t("籃球架 x2")}</div>
-                                <div className="facility-card">{t("觀眾席")}</div>
-                                <div className="facility-card">{t("更衣室")}</div>
-                                <div className="facility-card">{t("淋浴間")}</div>
-                                <div className="facility-card">{t("無障礙設施")}</div>
+                                <div className="facility-card">{t("internalBookingPage.messages.basketballX2")}</div>
+                                <div className="facility-card">{t("internalBookingPage.messages.spectatorSeats")}</div>
+                                <div className="facility-card">{t("internalBookingPage.messages.lockerRoom")}</div>
+                                <div className="facility-card">{t("internalBookingPage.messages.showerRoom")}</div>
+                                <div className="facility-card">{t("internalBookingPage.messages.noneFacilities")}</div>
                             </div>
                         </div>
                     )}
                 </div>
                 {/* 預約section */}
                 <div className="right-panel">
-                    <h4>{t("場地時段金額總覽")}</h4>
-                    <p>{t("選擇日期與時間進行預約")}</p>
+                    <h4>{t("internalBookingPage.headings.venueTimeSlotAmount")}</h4>
+                    <p>{t("internalBookingPage.messages.selectDateAndTimeBooking")}</p>
                     <div class="w-full mt-5 flex justify-center items-center">
                         <Calendar />
                     </div>
@@ -161,7 +161,7 @@ function Bookpage() {
                             <thead className="bg-blue-100 text-gray-700 text-lg">
                                 <tr>
                                     <th className="px-2 py-2 font-semibold sticky left-0 bg-blue-100 min-w-[80px] text-sm">
-                                        {t("時間")}
+                                        {t("internalBookingPage.labels.time")}
                                     </th>
 
                                     {Array.from({ length: 7 }).map((_, i) => {
@@ -240,7 +240,7 @@ function Bookpage() {
                                                                                 : "bg-blue-100 text-blue-600"}
                                                                     `}
                                                                 >
-                                                                    {isFull ? t("已滿") : t("確認此時段")}
+                                                                    {isFull ? t("internalBookingPage.actions.full") : t("internalBookingPage.actions.confirmThisTimeSlot")}
                                                                 </button>
                                                             )}
                                                         </div>

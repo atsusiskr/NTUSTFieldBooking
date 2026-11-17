@@ -5,7 +5,7 @@ import api from "../../baseApi";
 import { formatDateTime } from "../../utils/dateTimeFormat";
 import { describeRequestError } from "../../utils/requestError";
 
-function SelectVenueSection({ token, venues, venueChecked = null, selectedDate}) {
+function SelectVenueSection({ venues, venueChecked = null, selectedDate}) {
   const t = useTranslation();
   const navigate = useNavigate();
   const [selectedSlots, setSelectedSlots] = useState(null);
@@ -19,12 +19,12 @@ function SelectVenueSection({ token, venues, venueChecked = null, selectedDate})
   const baseDate = selectedDate ? new Date(selectedDate) : new Date();
   const typeMap = {
     "全部": "all",
-    "badminton" : "羽球場",
-    "tennis": "網球場",
-    "basketball": "籃球場",
-    "volleyball": "排球場",
-    "football": "足球場",
-    "other": "其他"
+    "badminton" : "common.sports.badmintonCourt",
+    "tennis": "common.sports.tennisCourt",
+    "basketball": "common.sports.basketballCourt",
+    "volleyball": "common.sports.volleyballCourt",
+    "football": "common.sports.soccerCourt",
+    "other": "common.sports.other"
   }
 
   const dateKeyLocal = (d) => {
@@ -78,7 +78,6 @@ function SelectVenueSection({ token, venues, venueChecked = null, selectedDate})
         end.setHours(23, 59, 59, 999);
 
         const res = await api.get("/bookings", {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           params: {
             start_time: start.toISOString(),
             end_time: end.toISOString(),
@@ -96,7 +95,7 @@ function SelectVenueSection({ token, venues, venueChecked = null, selectedDate})
     };
 
     fetchBookings();
-  }, [token, selectedDate]);
+  }, [selectedDate]);
 
   const bookedMap = useMemo(() => {
     const map = {};
@@ -182,7 +181,7 @@ function SelectVenueSection({ token, venues, venueChecked = null, selectedDate})
           <thead>
             <tr>
               <th className="sticky left-0 w-32 z-30 px-4 py-2 border whitespace-nowrap border-gray-300 bg-blue-100">
-                {t("時段")}
+                {t("common.labels.timeSlot")}
               </th>
 
               {venues.map((venue, idx) => {
@@ -283,10 +282,10 @@ function SelectVenueSection({ token, venues, venueChecked = null, selectedDate})
       
       <div className="mx-2 md:mx-18">
         {bookingsLoading && (
-          <p className="text-center text-sm text-gray-500 mb-2">{t("載入已預約時段中...")}</p>
+          <p className="text-center text-sm text-gray-500 mb-2">{t("internalVenuePage.selection.messages.loadBookedTimeSlot")}</p>
         )}
         {bookingsError && (
-          <p className="text-center text-sm text-red-600 mb-2">{t("取得已預約時段失敗：")}{describeRequestError(bookingsError).message}</p>
+          <p className="text-center text-sm text-red-600 mb-2">{t("internalVenuePage.selection.errors.bookedTimeSlotFailed")}{describeRequestError(bookingsError).message}</p>
         )}
         {tableByDate()}
       </div>
@@ -298,10 +297,10 @@ function SelectVenueSection({ token, venues, venueChecked = null, selectedDate})
             {(() => {
               const startHour = Math.min(...selectedSlots.hours);
               const endHour = Math.max(...selectedSlots.hours) + 1;
-              return translate("你已選擇：{value0} - {value1}", { value0: formatDateTime(startHour, { input: "hour" }).time, value1: formatDateTime(endHour, { input: "hour" }).time });
+              return translate("internalVenuePage.selection.messages.selectedTimeRange", { value0: formatDateTime(startHour, { input: "hour" }).time, value1: formatDateTime(endHour, { input: "hour" }).time });
             })()}
             <br />
-            {translate("場地：{value0} / 第 {value1} 面", { value0: venues[selectedSlots.venueIdx].name, value1: selectedSlots.resourceIdx + 1 })}
+            {translate("internalVenuePage.selection.messages.selectedVenueCourt", { value0: venues[selectedSlots.venueIdx].name, value1: selectedSlots.resourceIdx + 1 })}
           </div>
 
           <div className="flex-1" />
@@ -324,7 +323,7 @@ function SelectVenueSection({ token, venues, venueChecked = null, selectedDate})
             }}
             className="bg-green-500 text-white w-[150px] md:px-8 py-2.5 border-gray-300 rounded-lg shadow-xl hover:bg-green-600 transition font-semibold"
           >
-            {t("完成預約")}
+            {t("common.actions.completeBooking")}
           </button>
         </div>
       )

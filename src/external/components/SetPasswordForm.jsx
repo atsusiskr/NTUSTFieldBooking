@@ -17,15 +17,15 @@ function SetPasswordForm({ existingEmail, onSubmit, onCancel, submitLabel }) {
     if (submitting) return;
     const newEmail = email.trim();
     if (!existingEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
-      setError(t("請輸入有效的電子信箱。"));
+      setError(t("userPage.passwordForm.errors.pleaseEnterValidEmail"));
       return;
     }
     if (password.length < 8) {
-      setError(t("密碼至少需要 8 個字元。"));
+      setError(t("userPage.passwordForm.errors.passwordAtLeastNeed"));
       return;
     }
     if (password !== confirmation) {
-      setError(t("兩次輸入的密碼不一致。"));
+      setError(t("userPage.passwordForm.errors.enterPassword"));
       return;
     }
 
@@ -35,8 +35,8 @@ function SetPasswordForm({ existingEmail, onSubmit, onCancel, submitLabel }) {
       await onSubmit({ email: existingEmail ? undefined : newEmail, password });
     } catch (reason) {
       const failure = describeRequestError(reason, {
-        400: { message: t("請確認信箱與密碼是否符合要求。") },
-        409: { message: t("此帳號已設定密碼，無法再次設定。") },
+        400: { message: t("userPage.passwordForm.errors.pleaseConfirmAndPassword") },
+        409: { message: t("userPage.passwordForm.errors.thisAccountAlreadySettingsPasswordCannotSettings") },
       });
       setError(failure.message);
     } finally {
@@ -47,7 +47,7 @@ function SetPasswordForm({ existingEmail, onSubmit, onCancel, submitLabel }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
       <label className="block text-sm font-semibold text-slate-700">
-        {t("登入信箱")}
+        {t("userPage.passwordForm.labels.login")}
         <input
           type="email"
           value={email}
@@ -58,9 +58,9 @@ function SetPasswordForm({ existingEmail, onSubmit, onCancel, submitLabel }) {
           className={inputClass}
         />
       </label>
-      {existingEmail && <p className="text-xs text-slate-500">{t("此帳號已有信箱，會沿用原本的信箱。")}</p>}
+      {existingEmail && <p className="text-xs text-slate-500">{t("userPage.passwordForm.messages.thisAccountAlready")}</p>}
       <label className="block text-sm font-semibold text-slate-700">
-        {t("設定密碼")}
+        {t("userPage.passwordForm.labels.settingsPassword")}
         <input
           type="password"
           value={password}
@@ -73,7 +73,7 @@ function SetPasswordForm({ existingEmail, onSubmit, onCancel, submitLabel }) {
         />
       </label>
       <label className="block text-sm font-semibold text-slate-700">
-        {t("確認密碼")}
+        {t("userPage.passwordForm.labels.confirmPassword")}
         <input
           type="password"
           value={confirmation}
@@ -87,9 +87,9 @@ function SetPasswordForm({ existingEmail, onSubmit, onCancel, submitLabel }) {
       </label>
       {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       <div className="flex justify-end gap-3 pt-2">
-        <button type="button" onClick={onCancel} disabled={submitting} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60">{t("取消")}</button>
+        <button type="button" onClick={onCancel} disabled={submitting} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60">{t("common.actions.cancel")}</button>
         <button type="submit" disabled={submitting} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
-          {submitting ? t("儲存中...") : submitLabel}
+          {submitting ? t("common.actions.saving") : submitLabel}
         </button>
       </div>
     </form>

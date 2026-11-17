@@ -88,7 +88,7 @@ export const pickUpService = {
         const request = api.get(`/hosts/${encodeURIComponent(user.id)}/pickup-groups`, {
           params: { sport_id: sportId, sort_by: "start_time", sort_order: "asc", page, page_size: limit },
         }).then(({ data }) => {
-          if (!Array.isArray(data?.items)) throw new Error(translate("臨打團清單回應格式不正確"));
+          if (!Array.isArray(data?.items)) throw new Error(translate("pickUpPage.errors.messages.pickupGroup"));
           return data;
         });
         cachedPages.set(page, request);
@@ -181,7 +181,7 @@ export const pickUpService = {
     ]);
 
     const { data } = res;
-    if (!Array.isArray(data.items)) throw new Error(translate("臨打團清單回應格式不正確"));
+    if (!Array.isArray(data.items)) throw new Error(translate("pickUpPage.errors.messages.pickupGroup"));
     const pickups = data.items;
     const page = Number.isInteger(data.page) && data.page > 0 ? data.page : params.page || 1;
     const pageSize = Number.isInteger(data.page_size) && data.page_size > 0
@@ -293,7 +293,7 @@ export const pickUpService = {
           if (!pickUpdetail) throw new Error("臨打團詳情為空");
         } catch (error) {
           console.error(`無法取得訂單 ${order.id} 的臨打團詳情:`, error);
-          return { ...order, title: order.title || translate("活動資訊暫時無法取得"), location: null, detailsUnavailable: true };
+          return { ...order, title: order.title || translate("pickUpPage.errors.errors.infoTemporarilyCannot"), location: null, detailsUnavailable: true };
         }
         let locationInfo = pickUpdetail.location || order.location || null;
         if (pickUpdetail.location_id) {

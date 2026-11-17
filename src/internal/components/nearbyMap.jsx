@@ -146,7 +146,7 @@ function NearbyMap({ filter, venues = EMPTY_VENUES, onConfirmPlace = () => { } }
             >
               {idx === 0 && (
                 <div className="absolute bottom-2 left-2 bg-red-100 text-red-600 text-xs font-medium px-2 py-0.5 rounded-full">
-                  {t("上次預約")}
+                  {t("internalVenuePage.map.messages.booking")}
                 </div>
               )}
               <span className="name" style={{ color: place.color }}>{place.name}</span>
@@ -154,17 +154,17 @@ function NearbyMap({ filter, venues = EMPTY_VENUES, onConfirmPlace = () => { } }
               <button
                 onClick={() => handleClickLocation(idx)}
                 className="absolute bottom-2 right-20 bg-blue-400 text-white hover:bg-blue-600 text-base font-semibold px-2 py-1 rounded-md shadow"
-                title={t("查看位置")}
+                title={t("internalVenuePage.map.tooltips.viewLocation")}
               >
                 <FaSearch />
               </button>
               <button
                 onClick={() => handleClick(idx)}
                 className={`absolute bottom-2 right-2 text-xs font-semibold px-2 py-1 rounded-md shadow ${selectedPlaceIdx === idx ? "bg-gray-400 cursor-default text-white" : "bg-green-400 text-white hover:bg-green-600"}`}
-                title={t("確認選擇")}
+                title={t("internalVenuePage.map.tooltips.confirmSelect")}
                 disabled={selectedPlaceIdx === idx}
               >
-                {selectedPlaceIdx === idx ? t("已選擇") : t("確認場地")}
+                {selectedPlaceIdx === idx ? t("internalVenuePage.map.actions.alreadySelect") : t("internalVenuePage.map.actions.confirmVenue")}
               </button>
             </li>
           ))}
@@ -176,7 +176,7 @@ function NearbyMap({ filter, venues = EMPTY_VENUES, onConfirmPlace = () => { } }
             googleMapsApiKey={'AIzaSyBNCKN0oogWugXNw5hgo1Ml7anOAbmNfMQ'}
             onError={(e) => {
               console.error("Google Maps script 載入失敗:", e);
-              setMapsLoadError(t("Google Maps script 載入失敗（請看 Console / Network）"));
+              setMapsLoadError(t("internalVenuePage.map.errors.googleMapsScriptLoadFailedPleaseConsole"));
             }}
             onLoad={() => {
               console.log("Google Maps script 已載入", !!window.google?.maps);
@@ -244,7 +244,7 @@ function NearbyMap({ filter, venues = EMPTY_VENUES, onConfirmPlace = () => { } }
                 <button
                   className="absolute bottom-4 right-4 bg-white rounded-full p-2 shadow-md hover:bg-gray-100"
                   onClick={handleRecenter}
-                  title={t("回到目前位置")}
+                  title={t("common.tooltips.backToCurrentLocation")}
                 >
                   <IoPinSharp size={24} color="#333" />
                 </button>
@@ -254,7 +254,7 @@ function NearbyMap({ filter, venues = EMPTY_VENUES, onConfirmPlace = () => { } }
                 </div>
               ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-600">
-                {t("正在取得目前位置...")}
+                {t("internalVenuePage.map.messages.currentLocation")}
               </div>
             )}
           </LoadScript>

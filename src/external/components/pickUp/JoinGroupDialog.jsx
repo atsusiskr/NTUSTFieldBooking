@@ -5,7 +5,11 @@ import { getUserProfile } from "../../../service/userService";
 import { functionIconMap } from "../../../constant/IconMap";
 
 const emptyMember = () => ({ gender: "", skill_level: "" });
-const GENDERS = [{ value: "male", label: "男性" }, { value: "female", label: "女性" }, { value: "other", label: "其他" }];
+const GENDERS = [
+    { value: "male", labelKey: "common.gender.male" },
+    { value: "female", labelKey: "common.gender.female" },
+    { value: "other", labelKey: "common.gender.other" },
+];
 
 export default function JoinGroupDialog({ group, levels, levelsLoading, levelsError, onRetryLevels, joining, onClose, onConfirm }) {
   const t = useTranslation();
@@ -30,10 +34,10 @@ export default function JoinGroupDialog({ group, levels, levelsLoading, levelsEr
         setProfileError("");
         getUserProfile().then((user) => {
             if (cancelled) return;
-            if (!user?.username?.trim()) throw new Error(translate("帳號資料缺少 username"));
+            if (!user?.username?.trim()) throw new Error(translate("pickUpPage.joinDialog.messages.accountDataUsername"));
             setProfile(user);
         }).catch(() => {
-            if (!cancelled) setProfileError(t("無法取得報名者帳號資料，請重新載入。"));
+            if (!cancelled) setProfileError(t("pickUpPage.joinDialog.errors.cannotRegistrationAccountDataPleaseRetryLoad"));
         }).finally(() => {
             if (!cancelled) setProfileLoading(false);
         });
@@ -60,13 +64,13 @@ export default function JoinGroupDialog({ group, levels, levelsLoading, levelsEr
             return;
         }
         if (!canJoinAsGroup || !Number.isInteger(partySize) || partySize < 2 || partySize > remaining) {
-            setFormError(t("團體報名需至少 2 人，且不能超過剩餘的 {value0} 個名額。", { value0: remaining }));
+            setFormError(t("pickUpPage.joinDialog.errors.partySizeOutOfRange", { value0: remaining }));
             return;
         }
         if (!organizerName || members.length !== partySize || members.some((member, index) => !(index === 0 ? profileGender || member.gender : member.gender))
             || members.slice(1).some((member) => member.skill_level === ""
                 || !levels.some((level) => level.level === Number(member.skill_level)))) {
-            setFormError(t("請確認帳號名稱、每位成員的性別，以及同行者的運動程度。"));
+            setFormError(t("pickUpPage.joinDialog.errors.pleaseConfirmAccountNameMemberGenderAnd"));
             return;
         }
         onConfirm(group.id, {
@@ -82,7 +86,7 @@ export default function JoinGroupDialog({ group, levels, levelsLoading, levelsEr
         <div role="dialog" aria-modal="true" aria-labelledby="join-group-title" className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6" onMouseDown={(event) => event.stopPropagation()}>
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 id="join-group-title" className="text-xl font-bold text-slate-900">{t("確認報名")}</h2>
+                    <h2 id="join-group-title" className="text-xl font-bold text-slate-900">{t("pickUpPage.joinDialog.headings.confirmRegistration")}</h2>
                     <p className="mt-1 font-semibold text-slate-800">{group.title}</p>
                     <p className="mt-1 text-sm text-slate-600">{formatDateTime(group.start_time).date}　{formatDateTime(group.start_time).time}</p>
                 </div>
@@ -98,61 +102,61 @@ export default function JoinGroupDialog({ group, levels, levelsLoading, levelsEr
 
             <form onSubmit={submit} className="mt-5 space-y-5">
                 <fieldset>
-                    <legend className="mb-2 text-sm font-semibold text-slate-800">{t("報名方式")}</legend>
+                    <legend className="mb-2 text-sm font-semibold text-slate-800">{t("pickUpPage.joinDialog.messages.registrationMethod")}</legend>
                     <div className="grid grid-cols-2 gap-2">
                         <label className={`cursor-pointer rounded-xl border p-3 text-sm ${mode === "individual" ? "border-blue-600 bg-blue-50 text-blue-800" : "border-slate-200"}`}>
-                            <input type="radio" name="join-mode" checked={mode === "individual"} onChange={() => { setMode("individual"); setFormError(""); }} className="mr-2 accent-blue-600" />{t("個人報名")}
+                            <input type="radio" name="join-mode" checked={mode === "individual"} onChange={() => { setMode("individual"); setFormError(""); }} className="mr-2 accent-blue-600" />{t("pickUpPage.joinDialog.labels.peopleRegistration")}
                         </label>
                         <label className={`rounded-xl border p-3 text-sm ${mode === "group" ? "border-blue-600 bg-blue-50 text-blue-800" : "border-slate-200"} ${canJoinAsGroup ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}>
-                            <input type="radio" name="join-mode" checked={mode === "group"} disabled={!canJoinAsGroup} onChange={() => { setMode("group"); setFormError(""); }} className="mr-2 accent-blue-600" />{t("團體報名")}
+                            <input type="radio" name="join-mode" checked={mode === "group"} disabled={!canJoinAsGroup} onChange={() => { setMode("group"); setFormError(""); }} className="mr-2 accent-blue-600" />{t("pickUpPage.joinDialog.labels.registration")}
                         </label>
                     </div>
-                    <p className="mt-2 text-xs text-slate-500">{t("剩餘")} {remaining} {t("個名額。團體報名會一次占用全部所選名額。")}</p>
+                    <p className="mt-2 text-xs text-slate-500">{t("pickUpPage.joinDialog.messages.remaining")} {remaining} {t("pickUpPage.joinDialog.messages.capacityRegistrationAllCapacity")}</p>
                 </fieldset>
 
                 {mode === "group" && <div className="space-y-4">
-                    <label className="block text-sm font-semibold text-slate-700">{t("報名者帳號名稱")}
-                        <input value={organizerName} readOnly className="mt-1.5 w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2.5 font-normal text-slate-700" placeholder={profileLoading ? t("正在載入帳號資料…") : t("尚未取得帳號名稱")} />
+                    <label className="block text-sm font-semibold text-slate-700">{t("pickUpPage.joinDialog.labels.registrationAccountName")}
+                        <input value={organizerName} readOnly className="mt-1.5 w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-2.5 font-normal text-slate-700" placeholder={profileLoading ? t("pickUpPage.joinDialog.placeholders.loadAccountData") : t("pickUpPage.joinDialog.placeholders.notYetAccountName")} />
                     </label>
-                    {profileError && <p role="alert" className="text-sm text-red-700">{profileError}<button type="button" onClick={() => setProfileRetry((previous) => previous + 1)} className="font-semibold underline">{t("重新載入")}</button></p>}
-                    <label className="block text-sm font-semibold text-slate-700">{t("報名人數（含本人）")}
+                    {profileError && <p role="alert" className="text-sm text-red-700">{profileError}<button type="button" onClick={() => setProfileRetry((previous) => previous + 1)} className="font-semibold underline">{t("common.actions.reload")}</button></p>}
+                    <label className="block text-sm font-semibold text-slate-700">{t("pickUpPage.joinDialog.labels.registrationPeopleCountPeople")}
                         <input type="number" min="2" max={remaining} value={partySize} onChange={(event) => updatePartySize(event.target.value)} required className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-blue-500" />
                     </label>
                     <div className="space-y-3">
                         {members.map((member, index) => <div key={index} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                            <h3 className="text-sm font-semibold text-slate-800">{index === 0 ? t("第 1 位：本人") : translate("第 {value0} 位：同行者", { value0: index + 1 })}</h3>
+                            <h3 className="text-sm font-semibold text-slate-800">{index === 0 ? t("pickUpPage.joinDialog.headings.numberPeople") : translate("pickUpPage.joinDialog.headings.companionNumber", { value0: index + 1 })}</h3>
                             <div className={`mt-2 grid gap-3 ${index === 0 ? "" : "sm:grid-cols-2"}`}>
                                 {index === 0 && profileGender
-                                    ? <div className="text-xs font-semibold text-slate-600">{t("性別")}
-                                        <p className="mt-1 rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-normal text-slate-700">{t(GENDERS.find((gender) => gender.value === profileGender)?.label || profileGender)}{t("（帳號資料）")}</p>
+                                    ? <div className="text-xs font-semibold text-slate-600">{t("common.messages.gender")}
+                                        <p className="mt-1 rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-normal text-slate-700">{t(GENDERS.find((gender) => gender.value === profileGender)?.labelKey || "common.gender.other")}{t("pickUpPage.joinDialog.messages.accountData")}</p>
                                     </div>
-                                    : <label className="text-xs font-semibold text-slate-600">{t("性別")}
+                                    : <label className="text-xs font-semibold text-slate-600">{t("common.labels.gender")}
                                         <select value={member.gender} onChange={(event) => updateMember(index, "gender", event.target.value)} required className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal">
-                                            <option value="">{t("請選擇")}</option>
-                                            {GENDERS.map((gender) => <option key={gender.value} value={gender.value}>{t(gender.label)}</option>)}
+                                            <option value="">{t("common.messages.pleaseSelect")}</option>
+                                            {GENDERS.map((gender) => <option key={gender.value} value={gender.value}>{t(gender.labelKey)}</option>)}
                                         </select>
                                     </label>}
-                                {index > 0 && <label className="text-xs font-semibold text-slate-600">{t("運動程度")}
+                                {index > 0 && <label className="text-xs font-semibold text-slate-600">{t("pickUpPage.joinDialog.labels.skillLevel")}
                                     <select value={member.skill_level} onChange={(event) => updateMember(index, "skill_level", event.target.value)} required disabled={levelsLoading || Boolean(levelsError) || !levels.length} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal disabled:bg-slate-100">
-                                        <option value="">{t("請選擇")}</option>
+                                        <option value="">{t("common.messages.pleaseSelect")}</option>
                                         {levels.map((level) => <option key={level.level} value={level.level}>{level.label}</option>)}
                                     </select>
                                 </label>}
                             </div>
-                            {index === 0 && <p className="mt-2 text-xs text-slate-500">{t("本人的運動程度由帳號設定帶入。")}</p>}
+                            {index === 0 && <p className="mt-2 text-xs text-slate-500">{t("pickUpPage.joinDialog.messages.peopleSkillLevelAccountSettings")}</p>}
                         </div>)}
                     </div>
-                    {(levelsLoading || levelsError || !levels.length) && <p role="status" className="text-sm text-amber-700">{levelsLoading ? t("正在載入運動程度…") : levelsError || t("目前沒有可選的運動程度。")} <button type="button" onClick={onRetryLevels} className="font-semibold underline">{t("重新載入")}</button></p>}
+                    {(levelsLoading || levelsError || !levels.length) && <p role="status" className="text-sm text-amber-700">{levelsLoading ? t("pickUpPage.joinDialog.messages.loadSkillLevel") : levelsError || t("pickUpPage.joinDialog.messages.currentNoneSkillLevel")} <button type="button" onClick={onRetryLevels} className="font-semibold underline">{t("common.actions.reload")}</button></p>}
                 </div>}
 
                 <div className="rounded-xl bg-blue-50 p-3 text-sm text-blue-900">
-                    <p>{t("預計費用：NT$")} {(Number(group.fee || 0) * (mode === "group" ? partySize || 0 : 1)).toLocaleString("zh-TW")}</p>
-                    {mode === "group" && <p className="mt-1 text-xs">{t("此金額僅供參考，實際付款方式依主揪安排。")}</p>}
+                    <p>{t("pickUpPage.joinDialog.messages.feeNt")} {(Number(group.fee || 0) * (mode === "group" ? partySize || 0 : 1)).toLocaleString("zh-TW")}</p>
+                    {mode === "group" && <p className="mt-1 text-xs">{t("pickUpPage.joinDialog.messages.thisAmountPaymentMethodHost")}</p>}
                 </div>
                 {formError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{formError}</p>}
                 <div className="flex justify-end gap-3">
-                    <button type="button" onClick={onClose} disabled={joining} className="rounded-lg border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 disabled:opacity-50">{t("取消")}</button>
-                    <button type="submit" disabled={joining || (mode === "group" && (profileLoading || Boolean(profileError) || !organizerName || levelsLoading || Boolean(levelsError) || !levels.length))} className="rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{joining ? t("送出中…") : t("確認報名")}</button>
+                    <button type="button" onClick={onClose} disabled={joining} className="rounded-lg border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 disabled:opacity-50">{t("common.actions.cancel")}</button>
+                    <button type="submit" disabled={joining || (mode === "group" && (profileLoading || Boolean(profileError) || !organizerName || levelsLoading || Boolean(levelsError) || !levels.length))} className="rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{joining ? t("pickUpPage.joinDialog.actions.submit") : t("pickUpPage.joinDialog.actions.confirmRegistration")}</button>
                 </div>
             </form>
         </div>

@@ -1,29 +1,19 @@
-# 管理後台免重登：API 需求
+# 前台與管理後台共用登入 Session
 
-前台與管理後台使用同一個 API，但位於不同網域，無法直接共用登入狀態。以下為**待新增**的兩個端點，路徑可由後端調整；回應格式沿用現有 `LoginResponse` 與 `{ "error": "..." }`。
+後端 [API 文件](https://hackmd.io/@nekogravitycat/B16qfP93Me) 已提供伺服器端 session，不需要再建立一次性登入碼端點。前台為 `playball.gravitycat.tw`、後台為 `vdmin.gravitycat.tw`、API 為 `api-field.gravitycat.tw`，三者都在 `gravitycat.tw` 同站。
 
-## 1. 申請一次性登入碼
+## 前台目前的流程
 
-`POST /v1/auth/admin-handoff-codes`
+1. `POST /auth/login` 或 `POST /auth/line`：API 設定 HttpOnly 的 `__Host-session` Cookie，回傳短效 `access_token` 與 `user`。Token 只保存在 JavaScript 記憶體。
+2. 頁面載入：以 `withCredentials: true` 呼叫 `POST /auth/refresh`，成功才進入受保護頁面；`401` 顯示登入頁。
+3. 一般 API 請求帶 `Authorization: Bearer <access_token>`；收到 `401` 時 refresh 並重送一次。
+4. 登出：呼叫 `POST /auth/logout`，由 API 撤銷 session 並清除 Cookie。
 
-- Header：`Authorization: Bearer <前台目前的 access_token>`；不需 request body。
-- 後端確認帳號啟用且符合後台既有權限規則。
-- 成功回傳 `201`：`{ "code": "<一次性登入碼>", "expires_at": "<ISO 8601 UTC>" }`。
-- 失敗：`401` token 無效；`403` 無後台權限；`429` 請求過於頻繁。
+## 後台流程與檢查
 
-## 2. 兌換登入碼
+1. 公開後台的前端程式已在啟動時以 `withCredentials: true` 呼叫同一 API 的 `POST /auth/refresh`；成功時將短效 Token 存在記憶體，登入頁會導向符合使用者權限的頁面。
+2. 後台後續 API 請求仍帶 Bearer Token；到期後用相同 Cookie refresh。後台不得從 URL、前台的 localStorage 或跨網域 JavaScript 讀取 Token。
+3. 後台 Origin 已由 API 的 CORS 預檢回應允許（`Access-Control-Allow-Origin: https://vdmin.gravitycat.tw`、`Access-Control-Allow-Credentials: true`）。正式環境仍需在瀏覽器確認 API 能保存並回送 `__Host-session; HttpOnly; Secure; SameSite=Lax` Cookie。
+4. 登出應呼叫同一個 `POST /auth/logout`。後台是否允許進入仍由 API 與後台的權限檢查決定，不能只靠有 Cookie 判斷管理員資格。
 
-`POST /v1/auth/admin-handoff-codes/exchange`
-
-- Body：`{ "code": "<一次性登入碼>" }`；不需帶前台 token。
-- 後端再次確認帳號狀態與後台權限，成功後**原子地註銷登入碼**。
-- 成功回傳 `200`：沿用現有登入回應 `{ "access_token": "<新 token>", "user": { ... } }`。
-- 失敗：`400` code 無效、過期或已使用；`403` 權限已撤銷；`429` 嘗試過於頻繁。
-
-## 流程與必要限制
-
-前台申請 code → 跳轉 `https://vdmin.chenmh.dev/sso/callback?code=...` → 後台移除網址中的 code、呼叫兌換 API → 保存新 token 並以 `GET /me` 驗證使用者 → 進入後台。後台需新增 callback 頁面。
-
-code 建議 **60 秒內有效、僅能使用一次**；不可把 access token 放在網址，且 code/token 不可記錄到日誌或分析工具。全程使用 HTTPS，回應設定 `Cache-Control: no-store`，後台 callback 設定 `Referrer-Policy: no-referrer`。是否能進後台，仍依後台現有權限規則，不能因免重登而放寬。
-
-參考：[現有 API Swagger](https://swagger-field.gravitycat.tw/#/)；後台網址：[vdmin.chenmh.dev](https://vdmin.chenmh.dev/login)。
+前台右上角的「切換至後台」直接導向後台登入入口。公開程式碼與 CORS 預檢都符合共用 Session 的設計；完整免重登仍需用有權限的帳號在瀏覽器實際驗證 Cookie、refresh 與後台權限導頁。

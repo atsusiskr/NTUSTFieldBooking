@@ -7,7 +7,7 @@ export const notificationService = {
       params: { unread_only: unreadOnly, page, page_size: pageSize }, signal,
     });
     if (!Array.isArray(data?.items)) {
-      throw new Error(translate("通知列表回應格式不正確"));
+      throw new Error(translate("notificationPage.errors.messages.notification"));
     }
     const total = Number.isInteger(data.total) && data.total >= 0 ? data.total : null;
     const resolvedPage = Number.isInteger(data.page) && data.page > 0 ? data.page : page;
@@ -19,7 +19,7 @@ export const notificationService = {
   async getUnreadCount({ signal } = {}) {
     const { data } = await api.get("/notifications/unread-count", { signal });
     const count = data.unread ?? data.unread_count;
-    if (!Number.isInteger(count) || count < 0) throw new Error(translate("未讀數回應格式不正確"));
+    if (!Number.isInteger(count) || count < 0) throw new Error(translate("notificationPage.errors.messages.unread"));
     return count;
   },
   async markRead(id) {

@@ -13,7 +13,7 @@ function getWeekday(date) {
 function Calendar({
   onDayPicked = () => {},
   buttonId,
-  placeholder = "選擇日期",
+  placeholder = "common.placeholders.selectDate",
   showYearDropdown = false,
   maxDate,
   selectedDate,

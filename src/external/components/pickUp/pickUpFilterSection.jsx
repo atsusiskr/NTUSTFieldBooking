@@ -5,8 +5,8 @@ import { DoubleSlide } from "../../../components/rangeSlide";
 import { Search } from "lucide-react";
 
 const sortOptions = [
-    { value: "distance", label: "距離近" },
-    { value: "start_time", label: "快開始" },
+    { value: "distance", labelKey: "pickUpPage.filter.sort.nearest" },
+    { value: "start_time", labelKey: "pickUpPage.filter.sort.startingSoon" },
 ];
 
 function FilterContent({ activeFilter, onFilterChange, selectedDate, onDatePicked, onClearDate, isMobile, onClose,
@@ -26,7 +26,7 @@ function FilterContent({ activeFilter, onFilterChange, selectedDate, onDatePicke
     return (
         <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="mb-5 flex items-center justify-between">
-                <p className="text-lg font-bold text-gray-900">{t("篩選球團")}</p>
+                <p className="text-lg font-bold text-gray-900">{t("pickUpPage.filter.messages.filterGroup")}</p>
                 {isMobile && (
                     <button
                         type="button"
@@ -41,7 +41,7 @@ function FilterContent({ activeFilter, onFilterChange, selectedDate, onDatePicke
             <div className="space-y-5">
                 <form onSubmit={(event) => { event.preventDefault(); onSearchSubmit(); if (isMobile) onClose(); }} className="space-y-2">
                     <label htmlFor={isMobile ? "pickup-search-mobile" : "pickup-search-desktop"} className="text-xs font-bold tracking-wider text-gray-500">
-                        {t("搜尋團名或團主")}
+                        {t("pickUpPage.filter.labels.searchGroupNameOrHost")}
                     </label>
                     <div className="flex gap-2">
                         <input
@@ -50,10 +50,10 @@ function FilterContent({ activeFilter, onFilterChange, selectedDate, onDatePicke
                             value={searchDraft}
                             onChange={(event) => onSearchDraftChange(event.target.value)}
                             maxLength={100}
-                            placeholder={t("輸入團名或團主名稱")}
+                            placeholder={t("pickUpPage.filter.placeholders.enterGroupNameOrHostName")}
                             className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                         />
-                        <button type="submit" aria-label={t("搜尋球團")} className="grid min-h-10 w-10 shrink-0 place-items-center rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                        <button type="submit" aria-label={t("pickUpPage.filter.accessibility.searchGroup")} className="grid min-h-10 w-10 shrink-0 place-items-center rounded-lg bg-blue-600 text-white hover:bg-blue-700">
                             <Search size={18} aria-hidden="true" />
                         </button>
                         <button
@@ -61,13 +61,13 @@ function FilterContent({ activeFilter, onFilterChange, selectedDate, onDatePicke
                             onClick={onClearSearch}
                             className="shrink-0 rounded-lg border border-red-100 bg-white px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
                         >
-                            {t("清除")}
+                            {t("pickUpPage.filter.actions.clear")}
                         </button>
                     </div>
                 </form>
 
                 <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold tracking-wider text-gray-500">{t("排序方式")}</label>
+                    <label className="text-xs font-bold tracking-wider text-gray-500">{t("pickUpPage.filter.labels.sortMethod")}</label>
                     <div className="flex w-full rounded-lg bg-gray-100 p-1">
                         {sortOptions.map((option) => (
                             <button
@@ -79,14 +79,14 @@ function FilterContent({ activeFilter, onFilterChange, selectedDate, onDatePicke
                                     : "text-gray-500 hover:text-gray-700"
                                     }`}
                             >
-                                {t(option.label)}
+                                {t(option.labelKey)}
                             </button>
                         ))}
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold tracking-wider text-gray-500">{t("選擇日期")}</label>
+                    <label className="text-xs font-bold tracking-wider text-gray-500">{t("common.labels.selectDate")}</label>
                     <div className="flex items-center gap-2">
                         <Calendar selectedDate={selectedDate} onDayPicked={handleDatePicked} />
                         <button
@@ -94,17 +94,17 @@ function FilterContent({ activeFilter, onFilterChange, selectedDate, onDatePicke
                             onClick={onClearDate}
                             className="rounded-lg border border-red-100 bg-white px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
                         >
-                            {t("清除")}
+                            {t("pickUpPage.filter.actions.clear")}
                         </button>
                     </div>
                 </div>
 
                 <div className="space-y-3">
-                    <p className="text-xs font-bold tracking-wider text-gray-500">{t("篩選程度")}</p>
-                    {levelsLoading ? <p className="text-sm text-slate-500">{t("載入程度中…")}</p>
+                    <p className="text-xs font-bold tracking-wider text-gray-500">{t("pickUpPage.filter.messages.filterLevel")}</p>
+                    {levelsLoading ? <p className="text-sm text-slate-500">{t("pickUpPage.filter.messages.loadLevel")}</p>
                         : levelsError ? <div className="text-sm text-red-600" role="status">
                             <p>{levelsError}</p>
-                            <button type="button" onClick={onRetryLevels} className="mt-2 text-blue-600 underline">{t("重新載入")}</button>
+                            <button type="button" onClick={onRetryLevels} className="mt-2 text-blue-600 underline">{t("common.actions.reload")}</button>
                         </div>
                         : levels.length > 0 && levelRange ? <>
                             <DoubleSlide value={levelRange} onChange={onLevelChange} levels={levels} />
@@ -112,7 +112,7 @@ function FilterContent({ activeFilter, onFilterChange, selectedDate, onDatePicke
                                 <span className="absolute left-0 -translate-x-1/2">{levels[0].label}</span>
                                 <span className="absolute right-0 translate-x-1/2">{levels[levels.length - 1].label}</span>
                             </div>}
-                        </> : <p className="text-sm text-slate-500">{t("此球類尚未設定程度")}</p>}
+                        </> : <p className="text-sm text-slate-500">{t("pickUpPage.filter.messages.thisSportNotYetSettingsLevel")}</p>}
                 </div>
             </div>
         </section>

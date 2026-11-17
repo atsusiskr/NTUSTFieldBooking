@@ -19,7 +19,7 @@ export function buildPlacesWithColor(venues, currentPosition, t) {
         ...venue,
         index,
         distanceKm,
-        distanceText: t("距離約 {distance} 公里", { distance: distanceKm.toFixed(2) }),
+        distanceText: t("common.map.messages.distanceDistance", { distance: distanceKm.toFixed(2) }),
         color: PIN_COLORS[index % PIN_COLORS.length],
       };
     });

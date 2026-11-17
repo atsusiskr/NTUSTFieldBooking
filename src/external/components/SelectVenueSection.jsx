@@ -118,7 +118,7 @@ function SelectVenueSection({ venues, venueChecked = null, selectedDate, default
           <thead>
             <tr>
               <th className="sticky left-0 w-32 z-30 px-4 py-2 border whitespace-nowrap border-gray-300 bg-blue-100">
-                {t("時段")}
+                {t("common.labels.timeSlot")}
               </th>
 
               {venues.map((venue, idx) => {
@@ -177,7 +177,7 @@ function SelectVenueSection({ venues, venueChecked = null, selectedDate, default
                                   ? "bg-gray-200 text-gray-500"
                                   : "bg-blue-100 text-blue-600 hover:bg-blue-200"
                                 } w-8 h-10 rounded-full font-semibold flex items-center justify-center transition`}
-                              title={translate("第 {value0} 面場地 / {value1}-{value2}", { value0: i + 1, value1: start, value2: end })}
+                              title={translate("venuePage.selection.tooltips.courtTimeRange", { value0: i + 1, value1: start, value2: end })}
                             >
                               {i + 1}
                             </button>
@@ -203,7 +203,7 @@ function SelectVenueSection({ venues, venueChecked = null, selectedDate, default
           <thead>
             <tr>
               <th className="sticky text-lg left-0 z-30 px-4 py-2 border whitespace-nowrap border-gray-300 bg-blue-100">
-                {venueChecked ? venues[venueChecked.idx].name : t("場地")}
+                {venueChecked ? venues[venueChecked.idx].name : t("common.labels.venue")}
               </th>
 
               {sevenDays.map((day, idx) => {
@@ -231,7 +231,7 @@ function SelectVenueSection({ venues, venueChecked = null, selectedDate, default
                   colSpan={sevenDays.length + 1}
                   className="font-bold text-2xl px-4 py-16 text-center align-middle text-gray-500 border border-gray-300"
                 >
-                  {t("請先選擇場地")}
+                  {t("venuePage.selection.errors.pleaseFirstSelectVenue")}
                 </td>
               </tr>
             ) : (
@@ -301,7 +301,7 @@ function SelectVenueSection({ venues, venueChecked = null, selectedDate, default
           onClick={() => setViewMode(viewMode === "byDate" ? "byPlace" : "byDate")}
           className="bg-blue-500 md:bg-blue-300 my-4 px-4 py-1 rounded text-white hover:bg-blue-500 transition"
         >
-          {t("切換為")} {viewMode === "byDate" ? t("單場地七日") : t("單日多場地")}
+          {t("venuePage.selection.actions.switchTo")} {viewMode === "byDate" ? t("venuePage.selection.actions.singleVenueSevenDays") : t("venuePage.selection.actions.multipleVenuesSingleDay")}
         </button>
         )}
       </div>
@@ -316,12 +316,12 @@ function SelectVenueSection({ venues, venueChecked = null, selectedDate, default
             {(() => {
               const startHour = Math.min(...selectedSlots.hours);
               const endHour = Math.max(...selectedSlots.hours) + 1;
-              return translate("你已選擇：{value0} - {value1}", { value0: formatDateTime(startHour, { input: "hour" }).time, value1: formatDateTime(endHour, { input: "hour" }).time });
+              return translate("venuePage.selection.messages.selectedTimeRange", { value0: formatDateTime(startHour, { input: "hour" }).time, value1: formatDateTime(endHour, { input: "hour" }).time });
             })()}
             <br />
-            {translate("場地：{value0} / 第 {value1} 面", { value0: venues[selectedSlots.venueIdx].name, value1: selectedSlots.resourceIdx + 1 })}
+            {translate("venuePage.selection.messages.selectedVenueCourt", { value0: venues[selectedSlots.venueIdx].name, value1: selectedSlots.resourceIdx + 1 })}
             <br />
-            {translate("總金額：NT$ {value0}", { value0: getSelectedTotalPrice() })}
+            {translate("venuePage.selection.messages.totalAmount", { value0: getSelectedTotalPrice() })}
           </div>
 
           <div className="flex-1" />
@@ -346,7 +346,7 @@ function SelectVenueSection({ venues, venueChecked = null, selectedDate, default
             }}
             className="bg-green-500 text-white w-[150px] md:px-8 py-2.5 border-gray-300 rounded-lg shadow-xl hover:bg-green-600 transition font-semibold"
           >
-            {t("完成預約")}
+            {t("common.actions.completeBooking")}
           </button>
         </div>
       )

@@ -1,5 +1,5 @@
 import { translate } from "../locale/i18n";
-export const UNKNOWN_ERROR_MESSAGE = "請確認網路環境或稍後重試";
+export const UNKNOWN_ERROR_MESSAGE = "common.requestErrors.messages.pleaseConfirmRetry";
 
 const responseText = (value) => {
   if (typeof value === "string") return value.trim();
@@ -20,21 +20,21 @@ export const isRequestTimeout = (error) =>
 
 export function describeRequestError(error, overrides = {}) {
   if (isRequestTimeout(error)) {
-    return { title: translate("連線逾時"), message: translate("連線逾時，請確認網路環境後重試。") };
+    return { title: translate("common.requestErrors.messages.connectionTimeout"), message: translate("common.requestErrors.messages.pleaseConfirmRetry") };
   }
 
   const status = error?.response?.status;
   if (!status && (error?.code === "ERR_NETWORK" || error?.message === "Network Error")) {
-    return { title: translate("網路連線失敗"), message: translate("無法連線，請確認網路環境後重試。") };
+    return { title: translate("common.requestErrors.errors.failed"), message: translate("common.requestErrors.errors.cannotPleaseConfirmRetry") };
   }
 
   if (overrides[status]) return overrides[status];
-  if (status === 401) return { title: translate("登入已失效"), message: translate("請重新登入後再試。") };
-  if (status === 403) return { title: translate("沒有權限"), message: translate("目前的帳號沒有執行此操作的權限。") };
-  if (status === 404) return { title: translate("資料不存在"), message: translate("找不到相關資料，請重新整理後再試。") };
-  if (status === 409) return { title: translate("資料衝突"), message: translate("資料已變更或與其他操作衝突，請重新整理後再試。") };
-  if (status === 400 || status === 422) return { title: translate("資料格式錯誤"), message: translate("送出的資料有誤，請檢查後再試。") };
-  if (status === 429) return { title: translate("操作太頻繁"), message: translate("請稍後再試。") };
-  if (status >= 500) return { title: translate("系統暫時無法處理"), message: translate("請稍後再試。") };
-  return { title: translate("錯誤"), message: translate(UNKNOWN_ERROR_MESSAGE) };
+  if (status === 401) return { title: translate("common.requestErrors.messages.loginAlready"), message: translate("common.requestErrors.errors.pleaseRetryLogin") };
+  if (status === 403) return { title: translate("common.requestErrors.messages.nonePermission"), message: translate("common.requestErrors.messages.currentAccountNoneThisPermission") };
+  if (status === 404) return { title: translate("common.requestErrors.messages.data"), message: translate("common.requestErrors.errors.relatedDataPleaseRetry") };
+  if (status === 409) return { title: translate("common.requestErrors.messages.dataConflict"), message: translate("common.requestErrors.errors.dataAlreadyOrAndOtherPleaseRetry") };
+  if (status === 400 || status === 422) return { title: translate("common.requestErrors.errors.dataError"), message: translate("common.requestErrors.messages.submitDataPlease") };
+  if (status === 429) return { title: translate("common.requestErrors.messages.tooManyRequests"), message: translate("common.requestErrors.messages.pleaseLater") };
+  if (status >= 500) return { title: translate("common.requestErrors.errors.temporarilyCannot"), message: translate("common.requestErrors.messages.pleaseLater") };
+  return { title: translate("common.requestErrors.errors.error"), message: translate(UNKNOWN_ERROR_MESSAGE) };
 }

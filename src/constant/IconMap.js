@@ -21,19 +21,19 @@ import { GiShuttlecock } from "react-icons/gi";
 import { FaRestroom, FaPlus } from "react-icons/fa";
 
 export const facilityMap = {
-  waterdis: { name: "飲水機", icon: <Droplet /> },
-  showerRoom: { name: "淋浴間", icon: <ShowerHead /> },
-  lockerRoom: { name: "更衣室", icon: <Shirt /> },
-  restRoom: { name: "廁所", icon: <FaRestroom /> },
-  lighting: { name: "照明設備", icon: <LampCeiling /> },
-  equipmentRental: { name: "器材租借", icon: <Volleyball /> },
-  airconditioner: { name: "冷氣", icon: <AirVent /> },
-  wifi: { name: "網路", icon: <Wifi /> },
-  firstAid: { name: "急救設施", icon: <BriefcaseMedical /> },
-  accessible: { name: "無障礙設施", icon: <Accessibility /> },
-  carParking: { name: "汽車停車場", icon: <Car /> },
-  motorcycleParking: { name: "機車停車場", icon: <Motorbike /> },
-  parking: { name: "停車場", icon: <SquareParking /> },
+  waterdis: { name: "飲水機", labelKey: "common.facilities.waterdis", icon: <Droplet /> },
+  showerRoom: { name: "淋浴間", labelKey: "common.facilities.showerRoom", icon: <ShowerHead /> },
+  lockerRoom: { name: "更衣室", labelKey: "common.facilities.lockerRoom", icon: <Shirt /> },
+  restRoom: { name: "廁所", labelKey: "common.facilities.restRoom", icon: <FaRestroom /> },
+  lighting: { name: "照明設備", labelKey: "common.facilities.lighting", icon: <LampCeiling /> },
+  equipmentRental: { name: "器材租借", labelKey: "common.facilities.equipmentRental", icon: <Volleyball /> },
+  airconditioner: { name: "冷氣", labelKey: "common.facilities.airconditioner", icon: <AirVent /> },
+  wifi: { name: "網路", labelKey: "common.facilities.wifi", icon: <Wifi /> },
+  firstAid: { name: "急救設施", labelKey: "common.facilities.firstAid", icon: <BriefcaseMedical /> },
+  accessible: { name: "無障礙設施", labelKey: "common.facilities.accessible", icon: <Accessibility /> },
+  carParking: { name: "汽車停車場", labelKey: "common.facilities.carParking", icon: <Car /> },
+  motorcycleParking: { name: "機車停車場", labelKey: "common.facilities.motorcycleParking", icon: <Motorbike /> },
+  parking: { name: "停車場", labelKey: "common.facilities.parking", icon: <SquareParking /> },
 };
 
 export const functionIconMap = {
@@ -56,10 +56,10 @@ export const InfoIconMap = {
 };
 
 export const sportIconMap = {
-  BASEBALL: { name: "棒球", icon: <MdSportsBaseball /> },
-  VOLLEYBALL: { name: "排球", icon: <MdSportsVolleyball /> },
-  BADMINTON: { name: "羽球", icon: <GiShuttlecock /> },
-  TENNIS: { name: "網球", icon: <MdSportsTennis /> },
-  SOCCER: { name: "足球", icon: <MdSportsSoccer /> },
-  BASKETBALL: { name: "籃球", icon: <MdSportsBasketball /> },
+  BASEBALL: { name: "棒球", labelKey: "common.sports.baseball", icon: <MdSportsBaseball /> },
+  VOLLEYBALL: { name: "排球", labelKey: "common.sports.volleyball", icon: <MdSportsVolleyball /> },
+  BADMINTON: { name: "羽球", labelKey: "common.sports.badminton", icon: <GiShuttlecock /> },
+  TENNIS: { name: "網球", labelKey: "common.sports.tennis", icon: <MdSportsTennis /> },
+  SOCCER: { name: "足球", labelKey: "common.sports.soccer", icon: <MdSportsSoccer /> },
+  BASKETBALL: { name: "籃球", labelKey: "common.sports.basketball", icon: <MdSportsBasketball /> },
 };

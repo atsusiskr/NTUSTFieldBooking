@@ -56,7 +56,7 @@ function RegisterPage() {
     } catch (error) {
       const duplicateName = /username|使用者名稱/i.test(requestErrorDetail(error));
       const failure = describeRequestError(error, {
-        409: { title: t("registerPage.errorMessage.error"), message: duplicateName ? t("該使用者名稱已被使用") : t("registerPage.errorMessage.emailExist") },
+        409: { title: t("registerPage.errorMessage.error"), message: duplicateName ? t("registerPage.errors.usernameAlready") : t("registerPage.errorMessage.emailExist") },
       });
       errorPopup(failure.title, failure.message);
     } finally {
@@ -86,7 +86,7 @@ function RegisterPage() {
             <section>
               <div className="mb-4 flex items-center gap-3">
                 <h2 id="register-profile-heading" className="shrink-0 text-sm font-bold text-blue-700">
-                  {t("基本資料")}
+                  {t("registerPage.headings.basicProfile")}
                   </h2>
                 <div className="h-px flex-1 bg-blue-100" aria-hidden="true" />
               </div>
@@ -97,16 +97,16 @@ function RegisterPage() {
                   <div>
                     <label htmlFor="register-gender" className="block text-sm font-semibold text-slate-700">{labels.gender} <span className="text-red-600">*</span></label>
                     <select id="register-gender" name="gender" defaultValue="" required className={inputClassName}>
-                      <option value="" disabled>{t("請選擇")}</option>
-                      <option value="male">{t("男性")}</option>
-                      <option value="female">{t("女性")}</option>
+                      <option value="" disabled>{t("common.messages.pleaseSelect")}</option>
+                      <option value="male">{t("common.messages.male")}</option>
+                      <option value="female">{t("common.messages.female")}</option>
                     </select>
                   </div>
                   <div>
                     <label htmlFor="register-birth-date" className="block text-sm font-semibold text-slate-700">{labels.birthDate} <span className="text-red-600">*</span></label>
                     <Calendar
                       buttonId="register-birth-date"
-                      placeholder={t("選擇出生日期")}
+                      placeholder={t("registerPage.placeholders.selectBirthDate")}
                       showYearDropdown
                       maxDate={today}
                       onDayPicked={({ date }) => setBirthDate(formatBirthDate(date))}
@@ -121,7 +121,7 @@ function RegisterPage() {
             <section>
               <div className="mb-4 flex items-center gap-3">
                 <h2 id="register-account-heading" className="shrink-0 text-sm font-bold text-blue-700">
-                  {t("登入資訊")}
+                  {t("registerPage.headings.loginInfo")}
                   </h2>
                 <div className="h-px flex-1 bg-blue-100" aria-hidden="true" />
               </div>
@@ -133,12 +133,12 @@ function RegisterPage() {
             </section>
 
             <button type="submit" disabled={loading} className="min-h-11 w-full rounded-lg bg-blue-600 px-4 py-2.5 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
-              {loading ? t("registerPage.button.registering") : t("建立帳號")}
+              {loading ? t("registerPage.button.registering") : t("registerPage.actions.createAccount")}
             </button>
           </form>
 
           <p className="mt-5 text-center text-sm text-slate-500">
-            {t("已有帳號？")} <Link to="/" onClick={(event) => switchPage(event, "/")} className="font-semibold text-blue-700 hover:underline">{t("回到登入")}</Link>
+            {t("registerPage.messages.alreadyAccount")} <Link to="/" onClick={(event) => switchPage(event, "/")} className="font-semibold text-blue-700 hover:underline">{t("registerPage.actions.backToLogin")}</Link>
           </p>
         </main>
       </div>

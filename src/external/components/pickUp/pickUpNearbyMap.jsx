@@ -47,7 +47,7 @@ export default function GroupNearbyMap({ groups, onSelectGroup }) {
 
             const key = `${position.lat},${position.lng}`;
             if (!locations.has(key)) {
-                locations.set(key, { key, position, name: location.name || t("活動地點"), groups: [] });
+                locations.set(key, { key, position, name: location.name || t("pickUpPage.map.messages.location"), groups: [] });
             }
             locations.get(key).groups.push(group);
         });
@@ -149,13 +149,13 @@ export default function GroupNearbyMap({ groups, onSelectGroup }) {
                     <button
                         type="button"
                         onClick={() => setSelectedLocationKey((previous) => previous === key ? null : key)}
-                        aria-label={translate("查看{value0}的 {value1} 場活動", { value0: name, value1: locationGroups.length })}
+                        aria-label={translate("pickUpPage.map.accessibility.viewLocationActivities", { value0: name, value1: locationGroups.length })}
                         className="group relative block h-6 w-6 text-red-500 drop-shadow-md"
                     >
                         <span className="absolute bottom-full left-1/2 mb-1 -translate-x-1/2 whitespace-nowrap rounded border border-gray-200 bg-white px-2 py-1 text-xs font-bold text-gray-800 shadow-md transition-colors group-hover:border-blue-300 group-hover:bg-blue-50 group-hover:text-blue-600">
                             {locationGroups.length === 1
-                                ? translate("{value0} ({value1}/{value2}人)", { value0: locationGroups[0].title, value1: locationGroups[0].current_enrolled || 0, value2: locationGroups[0].capacity || 0 })
-                                : translate("{value0} · {value1} 場活動", { value0: name, value1: locationGroups.length })}
+                                ? translate("pickUpPage.map.messages.groupCapacity", { value0: locationGroups[0].title, value1: locationGroups[0].current_enrolled || 0, value2: locationGroups[0].capacity || 0 })
+                                : translate("pickUpPage.map.messages.locationActivityCount", { value0: name, value1: locationGroups.length })}
                         </span>
                         <RiMapPin2Fill className="block h-6 w-6" />
                     </button>
@@ -167,7 +167,7 @@ export default function GroupNearbyMap({ groups, onSelectGroup }) {
                     type="button"
                     className="absolute bottom-4 right-4 bg-white rounded-full p-2 shadow-md hover:bg-gray-100"
                     onClick={handleRecenter}
-                    title={t("回到目前位置")}
+                    title={t("common.tooltips.backToCurrentLocation")}
                 >
                     <IoPinSharp size={24} color="#333" />
                 </button>
@@ -178,9 +178,9 @@ export default function GroupNearbyMap({ groups, onSelectGroup }) {
                 <div className="flex items-start justify-between gap-2">
                     <div>
                         <p className="font-bold text-gray-900">{selectedLocation.name}</p>
-                        <p className="text-xs text-gray-500">{t("這裡有")} {selectedLocation.groups.length} {t("場活動")}</p>
+                        <p className="text-xs text-gray-500">{t("pickUpPage.map.messages.hereAre")} {selectedLocation.groups.length} {t("pickUpPage.map.messages.activities")}</p>
                     </div>
-                    <button type="button" onClick={() => setSelectedLocationKey(null)} aria-label={t("關閉活動清單")} className="rounded px-2 text-xl leading-none text-gray-500 hover:bg-gray-100">×</button>
+                    <button type="button" onClick={() => setSelectedLocationKey(null)} aria-label={t("pickUpPage.map.accessibility.close")} className="rounded px-2 text-xl leading-none text-gray-500 hover:bg-gray-100">×</button>
                 </div>
                 <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto">
                     {selectedLocation.groups.map((group) => (
@@ -194,7 +194,7 @@ export default function GroupNearbyMap({ groups, onSelectGroup }) {
                                 className="w-full rounded-lg px-2 py-2 text-left hover:bg-blue-50"
                             >
                                 <span className="block font-semibold text-gray-900">{group.title}</span>
-                                <span className="text-xs text-gray-500">{group.current_enrolled || 0}/{group.capacity || 0} {t("人・點擊查看詳情")}</span>
+                                <span className="text-xs text-gray-500">{group.current_enrolled || 0}/{group.capacity || 0} {t("pickUpPage.map.messages.peopleClickView")}</span>
                             </button>
                         </li>
                     ))}

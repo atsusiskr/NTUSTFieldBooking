@@ -33,13 +33,13 @@ function DateTimeField({ name, label, value, onPartChange }) {
     const [, time = ""] = value.split("T");
     return <div className="grid gap-3 sm:grid-cols-2">
         <div className="min-w-0">
-            <label htmlFor={`${name}-date`} className="block text-sm font-medium text-slate-700">{label}{t("日期")}</label>
+            <label htmlFor={`${name}-date`} className="block text-sm font-medium text-slate-700">{label}{t("pickUpPage.createDialog.labels.date")}</label>
             <div className="mt-1">
                 <Calendar buttonId={`${name}-date`} align="end" selectedDate={selectedDate(value)}
-                    placeholder={t("選擇日期")} onDayPicked={({ date: picked }) => onPartChange(name, "date", formatLocalDate(picked))} />
+                    placeholder={t("common.placeholders.selectDate")} onDayPicked={({ date: picked }) => onPartChange(name, "date", formatLocalDate(picked))} />
             </div>
         </div>
-        <label className="block min-w-0 text-sm font-medium text-slate-700">{label}{t("時間")}
+        <label className="block min-w-0 text-sm font-medium text-slate-700">{label}{t("pickUpPage.createDialog.labels.time")}
             <input type="time" value={time} onChange={(event) => onPartChange(name, "time", event.target.value)} required className={inputClass} />
         </label>
     </div>;
@@ -49,23 +49,23 @@ const validateSchedule = (form) => {
     const start = new Date(form.start_time);
     const end = new Date(form.end_time);
     const deadline = new Date(form.registration_deadline);
-    if (![start, end, deadline].every((date) => Number.isFinite(date.getTime()))) throw new Error(translate("請填寫完整的日期與時間。"));
-    if (deadline.getTime() <= Date.now()) throw new Error(translate("報名截止時間必須晚於現在。"));
-    if (deadline > start) throw new Error(translate("報名截止時間不能晚於開始時間。"));
-    if (end <= start) throw new Error(translate("結束時間必須晚於開始時間。"));
+    if (![start, end, deadline].every((date) => Number.isFinite(date.getTime()))) throw new Error(translate("pickUpPage.createDialog.messages.pleaseFillCompleteDateAndTime"));
+    if (deadline.getTime() <= Date.now()) throw new Error(translate("pickUpPage.createDialog.errors.registrationDeadlineTimeNow"));
+    if (deadline > start) throw new Error(translate("pickUpPage.createDialog.messages.registrationDeadlineTimeCannotStartTime"));
+    if (end <= start) throw new Error(translate("pickUpPage.createDialog.errors.endTimeStartTime"));
     return { start, end, deadline };
 };
 
 export function buildCreatePayload(form, sportId, levels) {
-    if (!form.title.trim() || !form.location_id) throw new Error(translate("請填寫團名並選擇場地。"));
+    if (!form.title.trim() || !form.location_id) throw new Error(translate("pickUpPage.createDialog.messages.pleaseFillGroupNameSelectVenue"));
     const { start, end, deadline } = validateSchedule(form);
-    if (form.fee === "" || !Number.isFinite(Number(form.fee)) || Number(form.fee) < 0) throw new Error(translate("費用必須為 0 或正數。"));
-    if (!Number.isInteger(Number(form.capacity)) || Number(form.capacity) < 1) throw new Error(translate("人數上限必須為正整數。"));
+    if (form.fee === "" || !Number.isFinite(Number(form.fee)) || Number(form.fee) < 0) throw new Error(translate("pickUpPage.createDialog.errors.feeOr"));
+    if (!Number.isInteger(Number(form.capacity)) || Number(form.capacity) < 1) throw new Error(translate("pickUpPage.createDialog.errors.peopleCount"));
     const min = Number(form.min_skill_level);
     const max = form.max_skill_level === "" ? null : Number(form.max_skill_level);
-    if (!levels.some((item) => item.level === min) || (max !== null && !levels.some((item) => item.level === max))) throw new Error(translate("請選擇有效的程度。"));
-    if (max !== null && max < min) throw new Error(translate("程度上限不能小於下限。"));
-    if (form.description.trim().length > 100 || form.social.trim().length > 500) throw new Error(translate("簡介或聯絡資訊超過字數限制。"));
+    if (!levels.some((item) => item.level === min) || (max !== null && !levels.some((item) => item.level === max))) throw new Error(translate("pickUpPage.createDialog.messages.pleaseSelectValidLevel"));
+    if (max !== null && max < min) throw new Error(translate("pickUpPage.createDialog.messages.levelCannot"));
+    if (form.description.trim().length > 100 || form.social.trim().length > 500) throw new Error(translate("pickUpPage.createDialog.messages.orContactInfo"));
     return {
         title: form.title.trim(), description: form.description.trim(), social: form.social.trim(),
         sport_id: sportId, location_id: form.location_id,
@@ -138,8 +138,8 @@ export default function CreatePickUpDialog({ sportId, levels, levelsLoading, lev
     const nextStep = () => {
         try {
             if (step === 0) {
-                if (!form.title.trim() || !form.location_id) throw new Error(t("請填寫團名並選擇場地。"));
-                if (!locations.some((item) => item.id === form.location_id)) throw new Error(t("請重新選擇有效的場地。"));
+                if (!form.title.trim() || !form.location_id) throw new Error(t("pickUpPage.createDialog.messages.pleaseFillGroupNameSelectVenue"));
+                if (!locations.some((item) => item.id === form.location_id)) throw new Error(t("pickUpPage.createDialog.errors.pleaseRetrySelectValidVenue"));
             } else if (step === 1) {
                 validateSchedule(form);
             }
@@ -152,7 +152,7 @@ export default function CreatePickUpDialog({ sportId, levels, levelsLoading, lev
         let payload;
         try {
             payload = buildCreatePayload(form, sportId, levels);
-            if (!locations.some((item) => item.id === payload.location_id)) throw new Error(translate("請重新選擇有效的場地。"));
+            if (!locations.some((item) => item.id === payload.location_id)) throw new Error(translate("pickUpPage.createDialog.errors.pleaseRetrySelectValidVenue"));
         } catch (failure) { setError(failure.message); return; }
         inFlight.current = true;
         setSaving(true);
@@ -174,19 +174,19 @@ export default function CreatePickUpDialog({ sportId, levels, levelsLoading, lev
             <div className="flex min-h-full min-w-0 items-center justify-center">
                 <DialogPanel className="w-full min-w-0 max-w-2xl rounded-2xl bg-white p-4 shadow-2xl sm:p-7">
                     <div className="mb-5 flex items-start justify-between gap-4">
-                        <div><DialogTitle className="text-xl font-bold text-slate-900">{t("建立臨打團")}</DialogTitle>
-                            <p className="mt-1 text-sm text-slate-500">{t("球類：")}{sportName || t("載入中…")}</p></div>
-                        <button type="button" aria-label={t("關閉建立表單")} disabled={saving} onClick={onClose} className="rounded-lg px-3 py-1 text-2xl text-slate-500 hover:bg-slate-100 disabled:opacity-50">×</button>
+                        <div><DialogTitle className="text-xl font-bold text-slate-900">{t("pickUpPage.createDialog.messages.createPickupGroup")}</DialogTitle>
+                            <p className="mt-1 text-sm text-slate-500">{t("pickUpPage.createDialog.messages.sport")}{sportName || t("common.messages.loading")}</p></div>
+                        <button type="button" aria-label={t("pickUpPage.createDialog.accessibility.closeCreate")} disabled={saving} onClick={onClose} className="rounded-lg px-3 py-1 text-2xl text-slate-500 hover:bg-slate-100 disabled:opacity-50">×</button>
                     </div>
-                    {(loading || levelsLoading) && <p role="status" className="mb-4 text-sm text-slate-500">{t("載入場地與程度資料中…")}</p>}
+                    {(loading || levelsLoading) && <p role="status" className="mb-4 text-sm text-slate-500">{t("pickUpPage.createDialog.messages.loadVenueAndLevelData")}</p>}
                     {(loadError || levelsError) && <div role="alert" className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
                         {loadError || levelsError}
-                        <button type="button" onClick={() => { setRetry((value) => value + 1); onRetryLevels(); }} className="ml-3 underline">{t("重新載入")}</button>
+                        <button type="button" onClick={() => { setRetry((value) => value + 1); onRetryLevels(); }} className="ml-3 underline">{t("common.actions.reload")}</button>
                     </div>}
-                    {!loading && !loadError && !locations.length && <p role="status" className="mb-4 text-sm text-amber-700">{t("目前沒有可選擇的開放場地。")}</p>}
-                    {!levelsLoading && !levelsError && !levels.length && <p role="status" className="mb-4 text-sm text-amber-700">{t("目前球類尚未設定程度，暫時無法開團。")}</p>}
-                    <ol aria-label="建立臨打團步驟" className="mb-5 grid grid-cols-3 gap-2">
-                        {[t("基本資料"), t("活動時間"), "報名設定"].map((name, index) =>
+                    {!loading && !loadError && !locations.length && <p role="status" className="mb-4 text-sm text-amber-700">{t("pickUpPage.createDialog.messages.currentNoneSelectOpenVenue")}</p>}
+                    {!levelsLoading && !levelsError && !levels.length && <p role="status" className="mb-4 text-sm text-amber-700">{t("pickUpPage.createDialog.errors.currentSportNotYetSettingsLevelTemporarilyCannot")}</p>}
+                    <ol aria-label={t("pickUpPage.createDialog.steps.label")} className="mb-5 grid grid-cols-3 gap-2">
+                        {[t("pickUpPage.createDialog.messages.basicProfile"), t("pickUpPage.createDialog.messages.time"), t("pickUpPage.createDialog.steps.registration")].map((name, index) =>
                             <li key={name} aria-current={step === index ? "step" : undefined}
                                 className={`min-w-0 rounded-lg px-2 py-2 text-center text-xs font-semibold sm:text-sm ${step === index ? "bg-blue-600 text-white" : index < step ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-500"}`}>
                                 <span className="block sm:inline">{index + 1}.</span> {name}
@@ -195,53 +195,53 @@ export default function CreatePickUpDialog({ sportId, levels, levelsLoading, lev
                     <form onSubmit={submit} noValidate>
                         <fieldset disabled={saving} className="min-w-0 space-y-4">
                           {step === 0 && <>
-                            {field("title", "團名")}
-                            <label className="block text-sm font-medium text-slate-700">{t("場地")}
+                            {field("title", "pickUpPage.createDialog.labels.groupName")}
+                            <label className="block text-sm font-medium text-slate-700">{t("common.labels.venue")}
                                 <select name="location_id" value={form.location_id} onChange={update} required disabled={loading} className={inputClass}>
-                                    <option value="">{t("請選擇場地")}</option>
+                                    <option value="">{t("pickUpPage.createDialog.messages.pleaseSelectVenue")}</option>
                                     {locations.map((item) => <option key={item.id} value={item.id}>{item.name}{item.address ? ` · ${item.address}` : ""}</option>)}
                                 </select>
                             </label>
                           </>}
                           {step === 1 && <>
                             <div className="space-y-4 rounded-xl bg-slate-50 p-3">
-                                <DateTimeField name="start_time" label={t("開始")} value={form.start_time} onPartChange={updateDateTime} />
-                                <DateTimeField name="end_time" label={t("結束")} value={form.end_time} onPartChange={updateDateTime} />
+                                <DateTimeField name="start_time" label={t("pickUpPage.createDialog.messages.start")} value={form.start_time} onPartChange={updateDateTime} />
+                                <DateTimeField name="end_time" label={t("pickUpPage.createDialog.messages.end")} value={form.end_time} onPartChange={updateDateTime} />
                             </div>
-                            <DateTimeField name="registration_deadline" label={t("報名截止")} value={form.registration_deadline} onPartChange={updateDateTime} />
+                            <DateTimeField name="registration_deadline" label={t("pickUpPage.createDialog.messages.registrationDeadline")} value={form.registration_deadline} onPartChange={updateDateTime} />
                           </>}
                           {step === 2 && <>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                {field("fee", "每人費用（元）", "number", { min: 0, step: "any" })}
-                                {field("capacity", "人數上限", "number", { min: 1, step: 1 })}
+                                {field("fee", "pickUpPage.createDialog.labels.feePerPerson", "number", { min: 0, step: "any" })}
+                                {field("capacity", "pickUpPage.createDialog.labels.capacity", "number", { min: 1, step: 1 })}
                             </div>
                             <div className="rounded-xl bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-800">
-                                {t("球類：")}{sportName || t("載入中…")}
+                                {t("pickUpPage.createDialog.messages.sport")}{sportName || t("common.messages.loading")}
                             </div>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 {["min_skill_level", "max_skill_level"].map((name, index) => <label key={name} className="block min-w-0 text-sm font-medium text-slate-700">
-                                    {index === 0 ? t("程度下限") : t("程度上限")}
+                                    {index === 0 ? t("pickUpPage.createDialog.labels.minimumLevel") : t("pickUpPage.createDialog.labels.maximumLevel")}
                                     <select name={name} value={form[name]} onChange={update} required={index === 0} disabled={levelsLoading} className={inputClass}>
-                                        <option value="">{index === 0 ? t("請選擇程度") : t("不設上限")}</option>
+                                        <option value="">{index === 0 ? t("common.messages.selectSkillLevel") : t("pickUpPage.createDialog.messages.noLimit")}</option>
                                         {levels.map((item) => <option key={item.level} value={item.level}>{item.label}</option>)}
                                     </select>
                                 </label>)}
                             </div>
-                            <label className="block text-sm font-medium text-slate-700">{t("簡介（選填，最多 100 字）")}
-                                <textarea name="description" value={form.description} onChange={update} maxLength={100} rows={3} className={inputClass} placeholder={t("活動說明、場地面數或注意事項")} />
+                            <label className="block text-sm font-medium text-slate-700">{t("pickUpPage.createDialog.labels.atMost")}
+                                <textarea name="description" value={form.description} onChange={update} maxLength={100} rows={3} className={inputClass} placeholder={t("pickUpPage.createDialog.placeholders.descriptionVenueOr")} />
                             </label>
-                            <label className="block text-sm font-medium text-slate-700">{t("聯絡資訊（選填，最多 500 字）")}
-                                <textarea name="social" value={form.social} onChange={update} maxLength={500} rows={2} className={inputClass} placeholder={t("例如 LINE ID 或聯絡方式；請填寫願意提供給參加者的資訊")} />
+                            <label className="block text-sm font-medium text-slate-700">{t("pickUpPage.createDialog.labels.contactInfoAtMost")}
+                                <textarea name="social" value={form.social} onChange={update} maxLength={500} rows={2} className={inputClass} placeholder={t("pickUpPage.createDialog.placeholders.lineIdOrMethodPleaseFillProvide")} />
                             </label>
                           </>}
                         </fieldset>
                         {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
                         <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-slate-100 pt-4">
-                            {step > 0 && <button type="button" disabled={saving} onClick={() => goToStep(step - 1)} className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 disabled:opacity-50">上一步</button>}
-                            {step === 0 && <button type="button" disabled={saving} onClick={onClose} className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 disabled:opacity-50">{t("取消")}</button>}
+                            {step > 0 && <button type="button" disabled={saving} onClick={() => goToStep(step - 1)} className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 disabled:opacity-50">{t("pickUpPage.createDialog.steps.previous")}</button>}
+                            {step === 0 && <button type="button" disabled={saving} onClick={onClose} className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 disabled:opacity-50">{t("common.actions.cancel")}</button>}
                             {step < 2
-                                ? <button type="button" onClick={nextStep} disabled={saving || loading || levelsLoading || !!loadError || !!levelsError || !locations.length || !levels.length} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">下一步</button>
-                                : <button type="submit" disabled={saving || loading || levelsLoading || !!loadError || !!levelsError || !locations.length || !levels.length} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{saving ? t("建立中…") : t("建立臨打團")}</button>}
+                                ? <button type="button" onClick={nextStep} disabled={saving || loading || levelsLoading || !!loadError || !!levelsError || !locations.length || !levels.length} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{t("pickUpPage.createDialog.steps.next")}</button>
+                                : <button type="submit" disabled={saving || loading || levelsLoading || !!loadError || !!levelsError || !locations.length || !levels.length} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{saving ? t("pickUpPage.createDialog.actions.create") : t("pickUpPage.createDialog.actions.createPickupGroup")}</button>}
                         </div>
                     </form>
                 </DialogPanel>

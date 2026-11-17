@@ -153,7 +153,7 @@ function NearbyMap({ filter, venues = EMPTY_VENUES, onConfirmPlace = () => { } }
             >
               {idx === -1 && (
                 <div className="absolute bottom-2 left-2 bg-red-100 text-red-600 text-xs font-medium px-2 py-0.5 rounded-full">
-                  {t("上次預約")}
+                  {t("venuePage.map.messages.booking")}
                 </div>
               )}
               <span className="name" style={{ color: place.color }}>{place.name}</span>
@@ -161,17 +161,17 @@ function NearbyMap({ filter, venues = EMPTY_VENUES, onConfirmPlace = () => { } }
               <button
                 onClick={() => handleClickLocation(idx)}
                 className="absolute bottom-2 right-20 bg-blue-400 text-white hover:bg-blue-600 text-base font-semibold px-2 py-1 rounded-md shadow"
-                title={t("查看位置")}
+                title={t("venuePage.map.tooltips.viewLocation")}
               >
                 <FaSearch />
               </button>
               <button
                 onClick={() => handleClick(idx)}
                 className={`absolute bottom-2 right-2 text-xs font-semibold px-2 py-1 rounded-md shadow ${selectedPlaceIdx === idx ? "bg-gray-400 cursor-default text-white" : "bg-green-400 text-white hover:bg-green-600"}`}
-                title={t("確認選擇")}
+                title={t("venuePage.map.tooltips.confirmSelect")}
                 disabled={selectedPlaceIdx === idx}
               >
-                {selectedPlaceIdx === idx ? t("已選擇") : t("確認場地")}
+                {selectedPlaceIdx === idx ? t("venuePage.map.actions.alreadySelect") : t("venuePage.map.actions.confirmVenue")}
               </button>
             </li>
           ))}
@@ -244,17 +244,17 @@ function NearbyMap({ filter, venues = EMPTY_VENUES, onConfirmPlace = () => { } }
                 <button
                   className="absolute bottom-4 right-4 bg-white rounded-full p-2 shadow-md hover:bg-gray-100"
                   onClick={handleRecenter}
-                  title={t("回到目前位置")}
+                  title={t("common.tooltips.backToCurrentLocation")}
                 >
                   <IoPinSharp size={24} color="#333" />
                 </button>
               </GoogleMap>) : loadError ? (
                 <div className="w-full h-full flex items-center justify-center bg-gray-100 text-red-600 p-4 text-center">
-                  {t("無法載入地圖，請稍後再試。")}
+                  {t("venuePage.map.errors.cannotLoadMapPleaseLater")}
                 </div>
               ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-600">
-                {t("正在取得目前位置...")}
+                {t("venuePage.map.messages.currentLocation")}
               </div>
             )}
         </div>

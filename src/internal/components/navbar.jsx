@@ -22,11 +22,11 @@ function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <h2>{t("NTUST 場地預約系統")}</h2>
+        <h2>{t("common.internalNavigation.headings.ntustVenueBooking")}</h2>
       </div>
       <ul className="navbar-center">
-        <li><Link to="/ntust/home/">{t("場地")}</Link></li>
-        <li><Link to="/ntust/order">{t("我的預約")}</Link></li>
+        <li><Link to="/ntust/home/">{t("common.actions.venue")}</Link></li>
+        <li><Link to="/ntust/order">{t("common.actions.myBookings")}</Link></li>
       </ul>
       <div className="navbar-right dropdown">
         <div className="icon-container">
@@ -34,9 +34,9 @@ function Navbar() {
           <IoPersonCircle className="person-icon" />
         </div>
         <div className="dropdown-content">
-          <Link to="/ntust/home/">{t("場地")}</Link>
-          <Link to="/ntust/order">{t("我的預約")}</Link>
-          <a href="/" onClick={handleLogout}>{t("登出")}</a>
+          <Link to="/ntust/home/">{t("common.actions.venue")}</Link>
+          <Link to="/ntust/order">{t("common.actions.myBookings")}</Link>
+          <a href="/" onClick={handleLogout}>{t("common.internalNavigation.messages.logout")}</a>
         </div>
       </div>
     </nav>

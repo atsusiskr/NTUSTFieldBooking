@@ -39,7 +39,7 @@ function PayPage() {
           onClick={() => navigate(-1)}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg"
         >
-          {t("返回預約頁")}
+          {t("internalPayPage.actions.backBooking")}
         </button>
       </div>
     );
@@ -114,7 +114,7 @@ function PayPage() {
     setSubmitError(null);
 
     if (!resolvedResourceId) {
-      setSubmitError(t("找不到 resource_id（請重新選擇場地/球場後再試一次）"));
+      setSubmitError(t("internalPayPage.errors.resourceIdPleaseRetrySelectVenueCourt"));
       return;
     }
 
@@ -133,11 +133,10 @@ function PayPage() {
     });
 
     if (!start_time || !end_time) {
-      setSubmitError(t("時段格式無法解析（請返回修改預約）"));
+      setSubmitError(t("internalPayPage.errors.timeSlotCannotPleaseBackBooking"));
       return;
     }
 
-    const token = localStorage.getItem("token")
 
     try {
       setIsSubmitting(true);
@@ -152,12 +151,11 @@ function PayPage() {
         {
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         }
       );
 
-      alert(t("訂單已送出！請耐心等候審核。"));
+      alert(t("internalPayPage.feedback.orderAlreadySubmitPleaseReview"));
       navigate(`/ntust/order`);
     } catch (e) {
       setSubmitError(describeRequestError(e).message);
@@ -176,11 +174,11 @@ function PayPage() {
           type="button"
         >
           <span aria-hidden>←</span>
-          <span>{t("返回場地列表")}</span>
+          <span>{t("common.messages.backToVenues")}</span>
         </button>
 
         <h1 className="ml-6 text-2xl font-semibold text-gray-900">
-          {t("資料填寫")}
+          {t("internalPayPage.headings.dataFill")}
         </h1>
       </div>
 
@@ -190,7 +188,7 @@ function PayPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-14 gap-y-2">
           {/* Left: venue */}
           <div>
-            <label className="block text-lg font-semibold text-gray-900 mb-3">{t("場地")}</label>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">{t("common.labels.venue")}</label>
             <div className="w-full rounded-full border border-gray-300 bg-gray-50 px-6 py-3 text-gray-900">
               {venueName || ""}
             </div>
@@ -198,7 +196,7 @@ function PayPage() {
 
           {/* Right: time */}
           <div>
-            <label className="block text-lg font-semibold text-gray-900 mb-3">{t("租借時間")}</label>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">{t("internalPayPage.labels.time")}</label>
             <div className="w-full rounded-full border border-gray-300 bg-gray-50 px-6 py-3 flex items-center justify-between">
               <span className="text-gray-900">{normalizeYmd(date) || String(date || "")}</span>
               <span className="text-gray-900">{timeRange || ""}</span>
@@ -207,36 +205,36 @@ function PayPage() {
 
           {/* Purpose - full width */}
           <div className="md:col-span-2">
-            <label className="block text-lg font-semibold text-gray-900 mb-3">{t("租借事由")}</label>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">{t("internalPayPage.labels.rentalReason")}</label>
             <input
               type="text"
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
-              placeholder={t("請輸入事由")}
+              placeholder={t("internalPayPage.placeholders.pleaseEnter")}
               className="w-full rounded-full border border-gray-300 bg-gray-50 px-6 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           {/* Needs */}
           <div>
-            <label className="block text-lg font-semibold text-gray-900 mb-3">{t("租借需求")}</label>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">{t("internalPayPage.labels.rentalNeeds")}</label>
             <input
               type="text"
               value={needs}
               onChange={(e) => setNeeds(e.target.value)}
-              placeholder={t("請輸入需求")}
+              placeholder={t("internalPayPage.placeholders.enterNeeds")}
               className="w-full rounded-full border border-gray-300 bg-gray-50 px-6 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           {/* Participants */}
           <div>
-            <label className="block text-lg font-semibold text-gray-900 mb-3">{t("活動人數")}</label>
+            <label className="block text-lg font-semibold text-gray-900 mb-3">{t("internalPayPage.labels.peopleCount")}</label>
             <input
               type="text"
               value={participants}
               onChange={(e) => setParticipants(e.target.value)}
-              placeholder={t("請輸入人數")}
+              placeholder={t("internalPayPage.placeholders.pleaseEnterPeopleCount")}
               className="w-full rounded-full border border-gray-300 bg-gray-50 px-6 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -245,34 +243,34 @@ function PayPage() {
           <div className="md:col-span-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               <div>
-                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("負責人（領隊）")}</label>
+                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("internalPayPage.labels.people")}</label>
                 <input
                   type="text"
                   value={leader}
                   onChange={(e) => setLeader(e.target.value)}
-                  placeholder={t("請輸入名字")}
+                  placeholder={t("internalPayPage.placeholders.enterName")}
                   className="w-full rounded-full border border-gray-300 bg-gray-50 px-6 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("申請人（含電話）")}</label>
+                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("internalPayPage.labels.applyPeoplePhone")}</label>
                 <input
                   type="text"
                   value={applicant}
                   onChange={(e) => setApplicant(e.target.value)}
-                  placeholder={t("請輸入名字與電話")}
+                  placeholder={t("internalPayPage.placeholders.pleaseEnterAndPhone")}
                   className="w-full rounded-full border border-gray-300 bg-gray-50 px-6 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("申請單位")}</label>
+                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("internalPayPage.labels.apply")}</label>
                 <input
                   type="text"
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
-                  placeholder={t("請輸入單位名稱")}
+                  placeholder={t("internalPayPage.placeholders.pleaseEnterName")}
                   className="w-full rounded-full border border-gray-300 bg-gray-50 px-6 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -283,40 +281,40 @@ function PayPage() {
           <div className="md:col-span-2 my-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
               <div>
-                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("銀行代碼")}</label>
+                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("internalPayPage.labels.bankCode")}</label>
                 <input
                   type="text"
                   value={bankCode}
                   onChange={(e) => setBankCode(e.target.value)}
-                  placeholder={t("請輸入代碼")}
+                  placeholder={t("internalPayPage.placeholders.enterCode")}
                   className="w-full rounded-full border border-gray-300 bg-gray-50 px-6 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("信用卡號")}</label>
+                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("internalPayPage.labels.cardNumber")}</label>
                 <input
                   type="text"
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value)}
-                  placeholder={t("請輸入需求")}
+                  placeholder={t("internalPayPage.placeholders.enterNeeds")}
                   className="w-full rounded-full border border-gray-300 bg-gray-50 px-6 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div className="md:col-start-2">
-                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("安全碼")}</label>
+                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("internalPayPage.labels.securityCode")}</label>
                 <input
                   type="password"
                   value={cvc}
                   onChange={(e) => setCvc(e.target.value)}
-                  placeholder={t("請輸入代碼")}
+                  placeholder={t("internalPayPage.placeholders.enterCode")}
                   className="w-full rounded-full border border-gray-300 bg-gray-50 px-6 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("期限")}</label>
+                <label className="block text-lg font-semibold text-gray-900 mb-3">{t("internalPayPage.labels.expiration")}</label>
                 <input
                   type="text"
                   value={expiry}
@@ -334,26 +332,26 @@ function PayPage() {
               <div className="flex">
                 <div className="w-14 shrink-0 border-r border-gray-300 flex items-center justify-center">
                   <span className="text-gray-800 font-semibold" style={{ writingMode: "vertical-rl" }}>
-                    {t("借用須知")}
+                    {t("internalPayPage.messages.rentalGuidelines")}
                   </span>
                 </div>
 
                 <div className="h-44 w-full overflow-auto p-4 text-sm leading-7 text-gray-800">
                   <ol className="list-decimal pl-5 space-y-1">
-                    <li>{t("申請借用場地時，請依本校運動場地管理辦法提出申請；場地借用申請表須先經總務所、管理單位審章同意，並請檢附參加人員名單及活動企劃。")}</li>
-                    <li>{t("申請借用及使用場地時，請出示教職員工證或學生證（有效學籍之學生證）。")}</li>
-                    <li>{t("如有特殊原因需取消使用時，本室有權利隨時通知申請人停止或改期借用，不得異議。")}</li>
-                    <li>{t("使用與登記內容不符或有違本校運動場地管理辦法時，體育室得立即禁止使用者行為。")}</li>
-                    <li>{t("未經體育室核准，不得於借用場地進行商業(收費)教學或訓練之行為。")}</li>
-                    <li>{t("體育館暨游泳池嚴禁抽煙與進食，違者隨時停止其使用權利。")}</li>
-                    <li>{t("請注意維護場內各種設備，倘有毀損情事，應負賠償責任。")}</li>
-                    <li>{t("借用場地時，除應維持清潔外，活動後負責將垃圾帶離現場。")}</li>
-                    <li>{t("校內單位借用，如在歸還時間內，未按時恢復原狀，停止日後借用之權利申請不得異議。")}</li>
-                    <li>{t("體育課程教學優先，不得以任何理由要求讓場。")}</li>
-                    <li>{t("基於活動安全之考量，借用者如改用瓦斯或明火烹煮，將暫停借用場地，並不得要求賠償。")}</li>
-                    <li>{t("場地借用申請時，校內請於使用日期10-14天前；校外借用30-45天前。(但經簽請本校核准之活動或競賽不在此限。)")}</li>
-                    <li>{t("校內借用使用時間：單次借用以三天(含六、日)。")}</li>
-                    <li>{t("借用單位應自行負責使用者之活動安全，並符合主管機關安全法規。")}</li>
+                    <li>{t("internalPayPage.messages.applyVenuePleaseVenueApplyVenueApply")}</li>
+                    <li>{t("internalPayPage.messages.applyAndVenuePleaseOrValid")}</li>
+                    <li>{t("internalPayPage.messages.cancelNotificationApplyPeopleOr")}</li>
+                    <li>{t("internalPayPage.messages.andContentOrVenueUser")}</li>
+                    <li>{t("internalPayPage.messages.venueChargeOr")}</li>
+                    <li>{t("internalPayPage.messages.and")}</li>
+                    <li>{t("internalPayPage.messages.please")}</li>
+                    <li>{t("internalPayPage.messages.venue")}</li>
+                    <li>{t("internalPayPage.messages.timeApply")}</li>
+                    <li>{t("internalPayPage.messages.sportsClassesTakePriority")}</li>
+                    <li>{t("internalPayPage.messages.orPausedVenue")}</li>
+                    <li>{t("internalPayPage.messages.venueApplyPleaseDateDayDayPlease")}</li>
+                    <li>{t("internalPayPage.messages.timeSingleDay")}</li>
+                    <li>{t("internalPayPage.messages.user")}</li>
                   </ol>
                 </div>
               </div>
@@ -376,7 +374,7 @@ function PayPage() {
               isSubmitting ? "opacity-60 cursor-not-allowed" : "hover:bg-blue-700"
             }`}
           >
-            {isSubmitting ? t("送出中...") : t("完成預約")}
+            {isSubmitting ? t("common.actions.submitting") : t("common.actions.completeBooking")}
           </button>
         </div>
       </div>

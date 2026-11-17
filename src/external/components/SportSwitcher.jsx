@@ -75,7 +75,7 @@ function SportSwitcher({ id, sports, selectedSport, onSelect, restoreFocusOnSele
           ref={triggerRef}
           type="button"
           className={`navbar-sport-trigger${open ? " is-open" : ""}`}
-          aria-label={`${t("球類")}：${selectedSport?.name || t("載入中")}`}
+          aria-label={`${t("common.sportSwitcher.accessibility.sport")}：${selectedSport?.name || t("common.sportSwitcher.accessibility.load")}`}
           aria-haspopup="menu"
           aria-expanded={open}
           aria-controls={`${id}-menu`}
@@ -84,11 +84,11 @@ function SportSwitcher({ id, sports, selectedSport, onSelect, restoreFocusOnSele
           onKeyDown={handleTriggerKeyDown}
         >
           <span className="navbar-sport-trigger-icon" aria-hidden="true">{getSportIcon(selectedSport)}</span>
-          <span className="navbar-sport-trigger-name">{selectedSport?.name || t("載入中")}</span>
+          <span className="navbar-sport-trigger-name">{selectedSport?.name || t("common.sportSwitcher.messages.load")}</span>
           <ChevronDown className="navbar-sport-chevron" size={16} aria-hidden="true" />
         </button>
         {open && (
-          <div id={`${id}-menu`} className="navbar-sport-options" role="menu" aria-label={t("球類")} onKeyDown={handleMenuKeyDown}>
+          <div id={`${id}-menu`} className="navbar-sport-options" role="menu" aria-label={t("common.sportSwitcher.accessibility.sport")} onKeyDown={handleMenuKeyDown}>
             {sports.map((sport, index) => {
               const selected = sport.id === selectedSport?.id;
               return (

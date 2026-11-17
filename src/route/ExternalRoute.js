@@ -24,6 +24,7 @@ function OutsideApp() {
       <Route path="/:id/" element={<BookingPage />} />
       <Route path="/pickup" element={<PickUpPage />} />
       <Route path="/coach" element={<CoachGroupPage />} />
+      <Route path="/coach/pickup" element={<Navigate to="/external/coach" replace />} />
       <Route path="/pickup/manage" element={<ManagePickUpPage />} />
       <Route path="/home" element={<Navigate to="/external/venue" replace />} />
       <Route path="/home/:sportType" element={<LegacyVenueRedirect />} />
