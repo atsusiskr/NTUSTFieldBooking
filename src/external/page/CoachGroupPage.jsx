@@ -288,7 +288,7 @@ export default function CoachGroupPage() {
       </div>
     </section>
     {!sportId && <p role="status" className="rounded-xl bg-white p-6">載入球類資料中…</p>}{loading && sportId && <p role="status" className="rounded-xl bg-white p-6">載入課程中…</p>}{error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-5 text-red-700">課程載入失敗：{error}<button type="button" onClick={() => setRefresh((value) => value + 1)} className="ml-3 font-semibold underline">重試</button></div>}{!loading && !error && courses.length === 0 && <p className="rounded-xl bg-white p-8 text-center text-slate-500">目前沒有符合條件的課程。</p>}
-    {!loading && !error && visibleTeachers.length > 0}
+    {!loading && !error && visibleTeachers.length > 0 }
     <div className="grid gap-4 md:grid-cols-2">{!loading && !error && courses.map((course) => {
       const registrationLabel = enrollmentLabel(course, mockMode && mockEnrolledIds.has(course.id));
       return <article key={course.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
